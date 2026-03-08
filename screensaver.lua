@@ -48,12 +48,12 @@ local font = {
 
 local function getMinecraftTimeString(blinkOn)
   local t = os.time() % 24
+  local offsetHours = 5
 
-  -- Map Minecraft's 24-hour value onto a 20-hour clock
-  -- so that 00:00 is sunrise and 10:00 is sunset.
   local totalMinutes = math.floor((t / 24) * 20 * 60 + 0.5)
+  totalMinutes = (totalMinutes - offsetHours * 60) % (20 * 60)
 
-  local hours = math.floor(totalMinutes / 60) % 20
+  local hours = math.floor(totalMinutes / 60)
   local minutes = totalMinutes % 60
 
   local sep = blinkOn and ":" or " "
