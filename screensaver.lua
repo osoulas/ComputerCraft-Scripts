@@ -150,7 +150,6 @@ while true do
 
   mon.setCursorPos(x, y)
   mon.setTextColor(palette[colourIndex])
-  mon.setBackgroundColor(colors.black)
   mon.write(text)
 
   if x + dx < 1 or x + dx + textWidth - 1 > w then
