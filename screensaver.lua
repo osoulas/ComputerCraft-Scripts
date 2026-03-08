@@ -8,12 +8,13 @@ mon.setBackgroundColor(colors.black)
 mon.clear()
 mon.setCursorBlink(false)
 
+-- Darken light gray so the big clock sits in the background.
 mon.setPaletteColor(colors.lightGray, 0.22, 0.22, 0.22)
 
 local w, h = mon.getSize()
 
 local text = "OSKAR"
-local x, y = 2, 2
+local x, y = 1, 2
 local dx, dy = 1, 1
 
 local palette = {
@@ -42,25 +43,30 @@ local font = {
   ["7"] = {"111","001","001","001","001"},
   ["8"] = {"111","101","111","101","111"},
   ["9"] = {"111","101","111","001","111"},
-  [":"] = {"0","1","0","1","0"}
+  [":"] = {"0","1","0","1","0"},
+  [" "] = {"0","0","0","0","0"}
 }
 
-local function getMinecraftTimeFromTicks()
-  local ticks = math.floor(os.epoch("ingame") / 3600) % 24000
-  local totalMinutes = math.floor((ticks / 1000) * 60 + 0.5)
+local function getMinecraftTime(blinkOn)
+  -- os.time() is Minecraft time with 0 = 06:00, so shift by +6 hours
+  local t = (os.time() + 6) % 24
 
+  -- Smooth minute changes by rounding rather than truncating
+  local totalMinutes = math.floor(t * 60 + 0.5)
   local hours = math.floor(totalMinutes / 60) % 24
   local minutes = totalMinutes % 60
 
-  return string.format("%02d:%02d", hours, minutes)
+  local sep = blinkOn and ":" or " "
+  return string.format("%02d%s%02d", hours, sep, minutes)
 end
 
 local function drawBlock(px, py, bw, bh, colour)
   mon.setBackgroundColor(colour)
   local line = string.rep(" ", bw)
   for yy = 0, bh - 1 do
-    if py + yy >= 1 and py + yy <= h then
-      mon.setCursorPos(px, py + yy)
+    local drawY = py + yy
+    if drawY >= 1 and drawY <= h then
+      mon.setCursorPos(px, drawY)
       mon.write(line)
     end
   end
@@ -68,12 +74,15 @@ end
 
 local function getClockScale(str)
   local totalUnitsWide = 0
+
   for i = 1, #str do
     local ch = str:sub(i, i)
     local patt = font[ch]
     local cw = #patt[1]
     totalUnitsWide = totalUnitsWide + cw
-    if i < #str then totalUnitsWide = totalUnitsWide + 1 end
+    if i < #str then
+      totalUnitsWide = totalUnitsWide + 1
+    end
   end
 
   local totalUnitsHigh = 5
@@ -93,7 +102,9 @@ local function drawBigClock(str)
     local patt = font[ch]
     local cw = #patt[1]
     totalUnitsWide = totalUnitsWide + cw
-    if i < #str then totalUnitsWide = totalUnitsWide + 1 end
+    if i < #str then
+      totalUnitsWide = totalUnitsWide + 1
+    end
   end
 
   local totalWidth = totalUnitsWide * scale
@@ -133,7 +144,9 @@ while true do
   mon.setBackgroundColor(colors.black)
   mon.clear()
 
-  local timeStr = getMinecraftTimeFromTicks()
+  -- Blink every half second
+  local blinkOn = math.floor(os.clock() * 2) % 2 == 0
+  local timeStr = getMinecraftTime(blinkOn)
   drawBigClock(timeStr)
 
   mon.setCursorPos(x, y)
