@@ -163,7 +163,7 @@ local function drawBigClock(str)
   local startX = math.floor((w - totalWidth) / 2) + 1
   local startY = math.floor((h - totalHeight) / 2) + 1
 
-  drawScaledString(str, startX, startY, scale, colors.lightGray)
+  drawString(str, startX, startY, scale, colors.lightGray)
 end
 
 local function getLogoScale()
@@ -178,7 +178,7 @@ local function getLogoSize(str, scale)
 end
 
 local function drawLogo(str, px, py, scale, colour)
-  drawScaledString(str, px, py, scale, colour)
+  drawString(str, px, py, colour)
 end
 
 while true do
