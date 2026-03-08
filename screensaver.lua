@@ -8,7 +8,6 @@ mon.setBackgroundColor(colors.black)
 mon.clear()
 mon.setCursorBlink(false)
 
--- Make lightGray darker so the clock sits in the background nicely.
 mon.setPaletteColor(colors.lightGray, 0.22, 0.22, 0.22)
 
 local w, h = mon.getSize()
@@ -33,84 +32,28 @@ local colourIndex = 1
 local textWidth = #text
 
 local font = {
-  ["0"] = {
-    "111",
-    "101",
-    "101",
-    "101",
-    "111",
-  },
-  ["1"] = {
-    "010",
-    "110",
-    "010",
-    "010",
-    "111",
-  },
-  ["2"] = {
-    "111",
-    "001",
-    "111",
-    "100",
-    "111",
-  },
-  ["3"] = {
-    "111",
-    "001",
-    "111",
-    "001",
-    "111",
-  },
-  ["4"] = {
-    "101",
-    "101",
-    "111",
-    "001",
-    "001",
-  },
-  ["5"] = {
-    "111",
-    "100",
-    "111",
-    "001",
-    "111",
-  },
-  ["6"] = {
-    "111",
-    "100",
-    "111",
-    "101",
-    "111",
-  },
-  ["7"] = {
-    "111",
-    "001",
-    "001",
-    "001",
-    "001",
-  },
-  ["8"] = {
-    "111",
-    "101",
-    "111",
-    "101",
-    "111",
-  },
-  ["9"] = {
-    "111",
-    "101",
-    "111",
-    "001",
-    "111",
-  },
-  [":"] = {
-    "0",
-    "1",
-    "0",
-    "1",
-    "0",
-  }
+  ["0"] = {"111","101","101","101","111"},
+  ["1"] = {"010","110","010","010","111"},
+  ["2"] = {"111","001","111","100","111"},
+  ["3"] = {"111","001","111","001","111"},
+  ["4"] = {"101","101","111","001","001"},
+  ["5"] = {"111","100","111","001","111"},
+  ["6"] = {"111","100","111","101","111"},
+  ["7"] = {"111","001","001","001","001"},
+  ["8"] = {"111","101","111","101","111"},
+  ["9"] = {"111","101","111","001","111"},
+  [":"] = {"0","1","0","1","0"}
 }
+
+local function getMinecraftTimeFromTicks()
+  local ticks = math.floor(os.epoch("ingame") / 3600) % 24000
+  local totalMinutes = math.floor((ticks / 1000) * 60 + 0.5)
+
+  local hours = math.floor(totalMinutes / 60) % 24
+  local minutes = totalMinutes % 60
+
+  return string.format("%02d:%02d", hours, minutes)
+end
 
 local function drawBlock(px, py, bw, bh, colour)
   mon.setBackgroundColor(colour)
@@ -124,7 +67,6 @@ local function drawBlock(px, py, bw, bh, colour)
 end
 
 local function getClockScale(str)
-  -- 3x5 font, with 1 column gap between characters.
   local totalUnitsWide = 0
   for i = 1, #str do
     local ch = str:sub(i, i)
@@ -139,21 +81,17 @@ local function getClockScale(str)
   local scaleX = math.max(1, math.floor((w - 4) / totalUnitsWide))
   local scaleY = math.max(1, math.floor((h - 4) / totalUnitsHigh))
 
-  -- Keep characters roughly proportionate and let the clock fill most of the screen.
-  local scale = math.max(1, math.min(scaleX, scaleY))
-  return scale
+  return math.max(1, math.min(scaleX, scaleY))
 end
 
 local function drawBigClock(str)
   local scale = getClockScale(str)
 
-  local charWidths = {}
   local totalUnitsWide = 0
   for i = 1, #str do
     local ch = str:sub(i, i)
     local patt = font[ch]
     local cw = #patt[1]
-    charWidths[i] = cw
     totalUnitsWide = totalUnitsWide + cw
     if i < #str then totalUnitsWide = totalUnitsWide + 1 end
   end
@@ -195,7 +133,7 @@ while true do
   mon.setBackgroundColor(colors.black)
   mon.clear()
 
-  local timeStr = textutils.formatTime(os.time(), true)
+  local timeStr = getMinecraftTimeFromTicks()
   drawBigClock(timeStr)
 
   mon.setCursorPos(x, y)
