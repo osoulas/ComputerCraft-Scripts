@@ -8,6 +8,7 @@ mon.setBackgroundColor(colors.black)
 mon.clear()
 mon.setCursorBlink(false)
 
+-- Dark grey for the large background clock
 mon.setPaletteColor(colors.lightGray, 0.22, 0.22, 0.22)
 
 term.redirect(mon)
@@ -30,25 +31,6 @@ local palette = {
   colors.purple,
   colors.magenta,
   colors.pink
-}
-
-local darker = {
-  [colors.white] = colors.lightGray,
-  [colors.orange] = colors.brown,
-  [colors.magenta] = colors.purple,
-  [colors.lightBlue] = colors.blue,
-  [colors.yellow] = colors.orange,
-  [colors.lime] = colors.green,
-  [colors.pink] = colors.red,
-  [colors.gray] = colors.black,
-  [colors.lightGray] = colors.gray,
-  [colors.cyan] = colors.blue,
-  [colors.purple] = colors.black,
-  [colors.blue] = colors.black,
-  [colors.brown] = colors.black,
-  [colors.green] = colors.black,
-  [colors.red] = colors.black,
-  [colors.black] = colors.black
 }
 
 local colourIndex = 1
@@ -163,6 +145,48 @@ local function drawBigClock(str)
   drawStringScaled(str, startX, startY, scale, colors.lightGray)
 end
 
+local function getDefaultRGB(col)
+  local defaults = {
+    [colors.white]     = 0xF0F0F0,
+    [colors.orange]    = 0xF2B233,
+    [colors.magenta]   = 0xE57FD8,
+    [colors.lightBlue] = 0x99B2F2,
+    [colors.yellow]    = 0xDEDE6C,
+    [colors.lime]      = 0x7FCC19,
+    [colors.pink]      = 0xF2B2CC,
+    [colors.gray]      = 0x4C4C4C,
+    [colors.lightGray] = 0x999999,
+    [colors.cyan]      = 0x4C99B2,
+    [colors.purple]    = 0xB266E5,
+    [colors.blue]      = 0x3366CC,
+    [colors.brown]     = 0x7F664C,
+    [colors.green]     = 0x57A64E,
+    [colors.red]       = 0xCC4C4C,
+    [colors.black]     = 0x111111
+  }
+
+  local rgb = defaults[col] or 0x000000
+  return colors.unpackRGB(rgb)
+end
+
+local function clamp01(x)
+  if x < 0 then return 0 end
+  if x > 1 then return 1 end
+  return x
+end
+
+local function setShadowFromColour(baseColour, factor)
+  local r, g, b = getDefaultRGB(baseColour)
+
+  r = clamp01(r * factor)
+  g = clamp01(g * factor)
+  b = clamp01(b * factor)
+
+  -- Reuse white as a custom shadow palette slot
+  mon.setPaletteColor(colors.white, r, g, b)
+  return colors.white
+end
+
 while true do
   w, h = term.getSize()
 
@@ -176,7 +200,7 @@ while true do
   local logoW = stringUnitsWide(logoText) * TEXT_SCALE
   local logoH = 5 * TEXT_SCALE
 
-  local shadowColour = darker[palette[colourIndex]] or colors.black
+  local shadowColour = setShadowFromColour(palette[colourIndex], 0.45)
   drawStringScaled(logoText, x + 1, y + 1, TEXT_SCALE, shadowColour)
   drawStringScaled(logoText, x, y, TEXT_SCALE, palette[colourIndex])
 
