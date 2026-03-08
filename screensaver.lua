@@ -8,7 +8,6 @@ mon.setBackgroundColor(colors.black)
 mon.clear()
 mon.setCursorBlink(false)
 
--- Darken light gray so the big clock sits in the background.
 mon.setPaletteColor(colors.lightGray, 0.22, 0.22, 0.22)
 
 local w, h = mon.getSize()
@@ -47,13 +46,14 @@ local font = {
   [" "] = {"0","0","0","0","0"}
 }
 
-local function getMinecraftTime(blinkOn)
-  -- os.time() is Minecraft time with 0 = 06:00, so shift by +6 hours
-  local t = (os.time() + 6) % 24
+local function getMinecraftTimeString(blinkOn)
+  local t = os.time() % 24
 
-  -- Smooth minute changes by rounding rather than truncating
-  local totalMinutes = math.floor(t * 60 + 0.5)
-  local hours = math.floor(totalMinutes / 60) % 24
+  -- Map Minecraft's 24-hour value onto a 20-hour clock
+  -- so that 00:00 is sunrise and 10:00 is sunset.
+  local totalMinutes = math.floor((t / 24) * 20 * 60 + 0.5)
+
+  local hours = math.floor(totalMinutes / 60) % 20
   local minutes = totalMinutes % 60
 
   local sep = blinkOn and ":" or " "
@@ -144,9 +144,8 @@ while true do
   mon.setBackgroundColor(colors.black)
   mon.clear()
 
-  -- Blink every half second
   local blinkOn = math.floor(os.clock() * 2) % 2 == 0
-  local timeStr = getMinecraftTime(blinkOn)
+  local timeStr = getMinecraftTimeString(blinkOn)
   drawBigClock(timeStr)
 
   mon.setCursorPos(x, y)
