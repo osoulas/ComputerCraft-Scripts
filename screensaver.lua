@@ -29,8 +29,7 @@ local palette = {
   colors.blue,
   colors.purple,
   colors.magenta,
-  colors.pink,
-  colors.white
+  colors.pink
 }
 
 local darker = {
