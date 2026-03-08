@@ -128,7 +128,7 @@ local function drawPixelSafe(px, py, colour)
   end
 end
 
-local function drawScaledChar(ch, px, py, scale, colour)
+local function drawChar(ch, px, py, colour)
   local patt = font[ch] or font[" "]
   local pw = #patt[1]
 
@@ -136,27 +136,20 @@ local function drawScaledChar(ch, px, py, scale, colour)
     local line = patt[row]
     for col = 1, pw do
       if line:sub(col, col) == "1" then
-        local bx = px + (col - 1) * scale
-        local by = py + (row - 1) * scale
-
-        for sy = 0, scale - 1 do
-          for sx = 0, scale - 1 do
-            drawPixelSafe(bx + sx, by + sy, colour)
-          end
-        end
+        drawPixelSafe(px + col - 1, py + row - 1, colour)
       end
     end
   end
 end
 
-local function drawScaledString(str, px, py, scale, colour)
+local function drawString(str, px, py, colour)
   local cx = px
   for i = 1, #str do
     local ch = str:sub(i, i)
-    drawScaledChar(ch, cx, py, scale, colour)
-    cx = cx + charWidth(ch) * scale
+    drawChar(ch, cx, py, colour)
+    cx = cx + charWidth(ch)
     if i < #str then
-      cx = cx + scale
+      cx = cx + 1
     end
   end
 end
@@ -198,15 +191,12 @@ while true do
   local timeStr = getMinecraftTimeString(blinkOn)
   drawBigClock(timeStr)
 
-  local logoScale = getLogoScale()
-  local logoW, logoH = getLogoSize(logoText, logoScale)
-
-  -- 1-pixel shadow offset
+  local logoW = stringUnitsWide(logoText)
+  local logoH = 5
+  
   local shadowColour = darker[palette[colourIndex]] or colors.black
-  drawLogo(logoText, x + 1, y + 1, logoScale, shadowColour)
-
-  -- Main logo
-  drawLogo(logoText, x, y, logoScale, palette[colourIndex])
+  drawString(logoText, x + 1, y + 1, shadowColour)
+  drawString(logoText, x, y, palette[colourIndex])
 
   if x + dx < 1 or x + dx + logoW - 1 > w then
     dx = -dx
