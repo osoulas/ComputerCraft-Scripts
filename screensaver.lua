@@ -8,7 +8,7 @@ mon.setBackgroundColor(colors.black)
 mon.clear()
 mon.setCursorBlink(false)
 
--- Dark grey for the big clock
+-- Dark grey for the big clock background
 mon.setPaletteColor(colors.lightGray, 0.22, 0.22, 0.22)
 
 local w, h = mon.getSize()
@@ -27,6 +27,25 @@ local palette = {
   colors.purple,
   colors.magenta,
   colors.pink
+}
+
+local darker = {
+  [colors.white] = colors.lightGray,
+  [colors.orange] = colors.brown,
+  [colors.magenta] = colors.purple,
+  [colors.lightBlue] = colors.blue,
+  [colors.yellow] = colors.orange,
+  [colors.lime] = colors.green,
+  [colors.pink] = colors.red,
+  [colors.gray] = colors.black,
+  [colors.lightGray] = colors.gray,
+  [colors.cyan] = colors.blue,
+  [colors.purple] = colors.black,
+  [colors.blue] = colors.black,
+  [colors.brown] = colors.black,
+  [colors.green] = colors.black,
+  [colors.red] = colors.black,
+  [colors.black] = colors.black
 }
 
 local colourIndex = 1
@@ -50,16 +69,17 @@ local font = {
 local hex = "0123456789abcdef"
 
 local function colourToBlit(c)
-  return hex:sub(math.log(c, 2) + 1, math.log(c, 2) + 1)
+  local n = math.floor(math.log(c, 2))
+  return hex:sub(n + 1, n + 1)
 end
 
 local function getMinecraftTimeString(blinkOn)
   local t = os.time() % 24
 
-  -- Convert 24h CC in-game time to a 20h sunrise-based clock
+  -- Convert CC's 24h in-game time into a 20h sunrise-based clock
   local totalMinutes = math.floor((t / 24) * 20 * 60 + 0.5)
 
-  -- Empirical shift to match JourneyMap
+  -- Empirical offset to match JourneyMap
   totalMinutes = (totalMinutes - 5 * 60) % (20 * 60)
 
   local hours = math.floor(totalMinutes / 60)
@@ -90,7 +110,6 @@ local function getClockScale(str)
 end
 
 local function getClockMask(str)
-  -- mask[yy][xx] = true if the big clock occupies that cell
   local mask = {}
   for yy = 1, h do
     mask[yy] = {}
@@ -157,6 +176,10 @@ local function drawBigClock(mask)
   mon.setBackgroundColor(colors.black)
   mon.clear()
 
+  local whiteBlit = colourToBlit(colors.white)
+  local greyBlit = colourToBlit(colors.lightGray)
+  local blackBlit = colourToBlit(colors.black)
+
   for yy = 1, h do
     local chars = {}
     local textCols = {}
@@ -164,12 +187,11 @@ local function drawBigClock(mask)
 
     for xx = 1, w do
       chars[#chars + 1] = " "
-      textCols[#textCols + 1] = colourToBlit(colors.white)
-
+      textCols[#textCols + 1] = whiteBlit
       if mask[yy][xx] then
-        bgCols[#bgCols + 1] = colourToBlit(colors.lightGray)
+        bgCols[#bgCols + 1] = greyBlit
       else
-        bgCols[#bgCols + 1] = colourToBlit(colors.black)
+        bgCols[#bgCols + 1] = blackBlit
       end
     end
 
@@ -178,22 +200,55 @@ local function drawBigClock(mask)
   end
 end
 
+local function drawShadow(mask)
+  local sx = x + 1
+  local sy = y + 1
+
+  if sy < 1 or sy > h then
+    return
+  end
+
+  local chars = text
+  local shadowColour = darker[palette[colourIndex]] or colors.black
+  local fg = colourToBlit(shadowColour)
+  local textCols = string.rep(fg, #text)
+
+  local bgCols = {}
+  local greyBlit = colourToBlit(colors.lightGray)
+  local blackBlit = colourToBlit(colors.black)
+
+  for i = 1, #text do
+    local xx = sx + i - 1
+    if xx >= 1 and xx <= w and mask[sy][xx] then
+      bgCols[#bgCols + 1] = greyBlit
+    else
+      bgCols[#bgCols + 1] = blackBlit
+    end
+  end
+
+  mon.setCursorPos(sx, sy)
+  mon.blit(chars, textCols, table.concat(bgCols))
+end
+
 local function drawMovingText(mask)
   if y < 1 or y > h then
     return
   end
 
-  local fg = colourToBlit(palette[colourIndex])
   local chars = text
+  local fg = colourToBlit(palette[colourIndex])
   local textCols = string.rep(fg, #text)
 
   local bgCols = {}
+  local greyBlit = colourToBlit(colors.lightGray)
+  local blackBlit = colourToBlit(colors.black)
+
   for i = 1, #text do
     local xx = x + i - 1
     if xx >= 1 and xx <= w and mask[y][xx] then
-      bgCols[#bgCols + 1] = colourToBlit(colors.lightGray)
+      bgCols[#bgCols + 1] = greyBlit
     else
-      bgCols[#bgCols + 1] = colourToBlit(colors.black)
+      bgCols[#bgCols + 1] = blackBlit
     end
   end
 
@@ -209,6 +264,7 @@ while true do
 
   local clockMask = getClockMask(timeStr)
   drawBigClock(clockMask)
+  drawShadow(clockMask)
   drawMovingText(clockMask)
 
   if x + dx < 1 or x + dx + textWidth - 1 > w then
