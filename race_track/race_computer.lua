@@ -38,6 +38,36 @@ bestMon.setTextScale(0.5)
 modeMon.setTextScale(0.5)
 sessionMon.setTextScale(0.5)
 
+local bigFont = {
+  ["0"] = {"111","101","101","101","111"},
+  ["1"] = {"010","110","010","010","111"},
+  ["2"] = {"111","001","111","100","111"},
+  ["3"] = {"111","001","111","001","111"},
+  ["4"] = {"101","101","111","001","001"},
+  ["5"] = {"111","100","111","001","111"},
+  ["6"] = {"111","100","111","101","111"},
+  ["7"] = {"111","001","001","001","001"},
+  ["8"] = {"111","101","111","101","111"},
+  ["9"] = {"111","101","111","001","111"},
+  ["."] = {"0","0","0","0","1"},
+  [":"] = {"0","1","0","1","0"},
+  [" "] = {"0","0","0","0","0"},
+  ["T"] = {"111","010","010","010","010"},
+  ["I"] = {"111","010","010","010","111"},
+  ["M"] = {"101","111","111","101","101"},
+  ["E"] = {"111","100","110","100","111"},
+  ["F"] = {"111","100","110","100","100"},
+  ["H"] = {"101","101","111","101","101"},
+  ["N"] = {"101","111","111","111","101"},
+  ["S"] = {"111","100","111","001","111"},
+  ["A"] = {"010","101","111","101","101"},
+  ["B"] = {"110","101","110","101","110"},
+  ["G"] = {"111","100","101","101","111"},
+  ["K"] = {"101","110","100","110","101"},
+  ["L"] = {"100","100","100","100","111"},
+  ["R"] = {"110","101","110","101","101"},
+}
+
 local function loadRecords()
   if fs.exists(RECORD_FILE) then
     local h = fs.open(RECORD_FILE, "r")
@@ -176,30 +206,6 @@ local function clearMonitor(mon, bg)
   term.redirect(prev)
 end
 
-local bigFont = {
-  ["0"] = {"111","101","101","101","111"},
-  ["1"] = {"010","110","010","010","111"},
-  ["2"] = {"111","001","111","100","111"},
-  ["3"] = {"111","001","111","001","111"},
-  ["4"] = {"101","101","111","001","001"},
-  ["5"] = {"111","100","111","001","111"},
-  ["6"] = {"111","100","111","101","111"},
-  ["7"] = {"111","001","001","001","001"},
-  ["8"] = {"111","101","111","101","111"},
-  ["9"] = {"111","101","111","001","111"},
-  ["."] = {"0","0","0","0","1"},
-  [":"] = {"0","1","0","1","0"},
-  [" "] = {"0","0","0","0","0"},
-  ["T"] = {"111","010","010","010","010"},
-  ["I"] = {"111","010","010","010","111"},
-  ["M"] = {"101","111","111","101","101"},
-  ["E"] = {"111","100","110","100","111"},
-  ["F"] = {"111","100","110","100","100"},
-  ["H"] = {"101","101","111","101","101"},
-  ["N"] = {"101","111","111","111","101"},
-  ["S"] = {"111","100","111","001","111"},
-}
-
 local function charWidth(ch)
   local patt = bigFont[ch] or bigFont[" "]
   return #patt[1]
@@ -274,6 +280,53 @@ local function getStringScale(mon, str, maxWidthPadding, maxHeightPadding)
 
   term.redirect(prev)
   return math.max(1, math.min(scaleX, scaleY))
+end
+
+local function fmtBoardTime(t)
+  if not t then return "--:--.--" end
+
+  local totalHundredths = math.floor(t * 100 + 0.5)
+  local hours = math.floor(totalHundredths / 360000)
+  local minutes = math.floor((totalHundredths % 360000) / 6000)
+  local secs = math.floor((totalHundredths % 6000) / 100)
+  local hundredths = totalHundredths % 100
+
+  if hours > 0 then
+    return string.format("%d:%02d:%02d", hours, minutes, secs)
+  else
+    return string.format("%02d:%02d.%02d", minutes, secs, hundredths)
+  end
+end
+
+local function drawShadowedStringScaled(mon, str, px, py, scale, mainColour, shadowColour)
+  drawStringScaled(mon, str, px + scale, py + scale, scale, shadowColour)
+  drawStringScaled(mon, str, px, py, scale, mainColour)
+end
+
+local function drawBestHeader()
+  local title = "BEST TIMES"
+  local subtitle = "ALL-TIME RANKING"
+
+  local prev = term.current()
+  term.redirect(bestMon)
+
+  local w, h = term.getSize()
+  term.redirect(prev)
+
+  local titleScale = getStringScale(bestMon, title, 6, 18)
+  local titleWidth = stringUnitsWide(title) * titleScale
+  local titleHeight = 5 * titleScale
+
+  local titleX = math.floor((w - titleWidth) / 2) + 1
+  local titleY = 1
+
+  drawShadowedStringScaled(bestMon, title, titleX, titleY, titleScale, colors.yellow, colors.gray)
+
+  bestMon.setCursorPos(math.max(1, math.floor((w - #subtitle) / 2) + 1), titleY + titleHeight + 1)
+  bestMon.setTextColor(colors.lightGray)
+  bestMon.write(subtitle)
+
+  return titleY + titleHeight + 3
 end
 
 local function drawFilledEllipse(mon, cx, cy, rx, ry, colour)
@@ -361,7 +414,7 @@ local function drawRunningTime(seconds)
   -- MM:SS.hh
   timeStr = string.format("%02d:%02d.%02d", minutes, secs, hundredths)
   end
-  
+
   local scale = getStringScale(startMon, timeStr, 4, 4)
 
   local textWidth = stringUnitsWide(timeStr) * scale
@@ -409,72 +462,97 @@ local function drawBestMonitor()
   bestMon.setBackgroundColor(colors.black)
   bestMon.clear()
 
+  local w, h = bestMon.getSize()
+
   local function line(y, text, color)
+    if y < 1 or y > h then return end
     bestMon.setCursorPos(1, y)
     bestMon.setTextColor(color or colors.white)
-    bestMon.write(text)
+    bestMon.write(text:sub(1, w))
   end
 
-  line(1, "ALL-TIME BEST LAPS", colors.yellow)
-  line(2, "POS NAME         BEST", colors.cyan)
+  local y = drawBestHeader()
 
-  local list = {}
+  -- Column layout
+  local posWidth = 4
+  local bestWidth = 9
+  local nameWidth = math.max(6, w - posWidth - bestWidth - 2)
+
+  local header = string.format(
+    "%-" .. posWidth .. "s %-" .. nameWidth .. "s %".. bestWidth .. "s",
+    "POS", "NAME", "BEST"
+  )
+  line(y, header, colors.cyan)
+  y = y + 1
+  line(y, string.rep("-", math.min(w, posWidth + nameWidth + bestWidth + 2)), colors.gray)
+  y = y + 1
+
+  local ranked = {}
+  local noTime = {}
+
   for name, p in pairs(players) do
-    table.insert(list, { name = name, best = records[name] or p.allTimeBest })
+    local best = records[name] or p.allTimeBest
+    if best then
+      table.insert(ranked, { name = name, best = best })
+    else
+      table.insert(noTime, { name = name })
+    end
   end
 
-  table.sort(list, function(a, b)
-    if a.best == nil and b.best == nil then return a.name < b.name end
-    if a.best == nil then return false end
-    if b.best == nil then return true end
+  table.sort(ranked, function(a, b)
+    if a.best == b.best then
+      return a.name < b.name
+    end
     return a.best < b.best
   end)
 
-  local y = 3
-  for i = 1, math.min(#list, 20) do
-    local e = list[i]
-    line(y, string.format("%-3d %-12s %s", i, e.name:sub(1, 12), fmtTime(e.best)), colors.white)
+  table.sort(noTime, function(a, b)
+    return a.name < b.name
+  end)
+
+  -- Ranked entries
+  for i, e in ipairs(ranked) do
+    if y > h then return end
+
+    local colour = colors.white
+    if i == 1 then
+      colour = colors.yellow
+    elseif i == 2 then
+      colour = colors.lightGray
+    elseif i == 3 then
+      colour = colors.orange
+    end
+
+    local row = string.format(
+      "%-" .. posWidth .. "d %-" .. nameWidth .. "s %" .. bestWidth .. "s",
+      i,
+      e.name:sub(1, nameWidth),
+      fmtBoardTime(e.best)
+    )
+
+    line(y, row, colour)
     y = y + 1
   end
-end
 
-local function drawModeMonitor()
-  modeMon.setBackgroundColor(colors.black)
-  modeMon.clear()
-
-  local function line(y, text, color)
-    modeMon.setCursorPos(1, y)
-    modeMon.setTextColor(color or colors.white)
-    modeMon.write(text)
-  end
-
-  line(1, "MODE / INSTRUCTIONS", colors.yellow)
-  line(3, "Mode: " .. (mode == "race" and "RACE" or "TIME TRIAL"), colors.cyan)
-  line(4, "Phase: " .. string.upper(phase), colors.lightGray)
-
-  local lapDisplay = currentLapTarget or lapSelectorValue()
-  if mode == "race" then
-    line(5, "Laps: " .. tostring(lapDisplay), colors.white)
-  else
-    line(5, "Laps: free session", colors.white)
-  end
-
-  line(7, "Buttons:", colors.orange)
-  line(8, "Left  = toggle mode", colors.white)
-  line(9, "Right = start", colors.white)
-  line(10, "Back  = reset", colors.white)
-
-  line(12, "Ready players:", colors.orange)
-  local y = 13
-  local names = {}
-  for name, _ in pairs(players) do table.insert(names, name) end
-  table.sort(names)
-  for _, name in ipairs(names) do
-    local p = players[name]
-    local status = p.enabled and "YES" or "NO"
-    line(y, string.format("%-12s %s", name:sub(1, 12), status), p.enabled and colors.lime or colors.red)
+  -- Spacer before no-time section
+  if #noTime > 0 and y <= h - 2 then
     y = y + 1
-    if y > 25 then break end
+    line(y, "NO RECORDED TIME", colors.red)
+    y = y + 1
+  end
+
+  for _, e in ipairs(noTime) do
+    if y > h then return end
+
+    local row = string.format(
+      "%-" .. posWidth .. "s %-" .. nameWidth .. "s %" .. bestWidth .. "s",
+      "-",
+      e.name:sub(1, nameWidth),
+      "--:--.--"
+    )
+
+    line(y, row, colors.gray)
+    y = y + 1
   end
 end
 
