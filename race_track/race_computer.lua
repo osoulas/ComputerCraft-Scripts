@@ -193,7 +193,11 @@ local bigFont = {
   ["T"] = {"111","010","010","010","010"},
   ["I"] = {"111","010","010","010","111"},
   ["M"] = {"101","111","111","101","101"},
-  ["E"] = {"111","100","110","100","111"}
+  ["E"] = {"111","100","110","100","111"},
+  ["F"] = {"111","100","110","100","100"},
+  ["H"] = {"101","101","111","101","101"},
+  ["N"] = {"101","111","111","111","101"},
+  ["S"] = {"111","100","111","001","111"},
 }
 
 local function charWidth(ch)
@@ -341,30 +345,23 @@ local function drawRunningTime(seconds)
   local w, h = term.getSize()
   term.redirect(prev)
 
-  local label = "TIME"
   local totalHundredths = math.floor(seconds * 100 + 0.5)
   local minutes = math.floor(totalHundredths / 6000)
   local secs = math.floor((totalHundredths % 6000) / 100)
   local hundredths = totalHundredths % 100
   local timeStr = string.format("%02d:%02d.%02d", minutes, secs, hundredths)
 
-  local labelScale = getStringScale(startMon, label, 4, h > 12 and 8 or 4)
   local timeScale = getStringScale(startMon, timeStr, 4, h > 12 and 6 or 2)
-
-  local labelWidth = stringUnitsWide(label) * labelScale
-  local labelHeight = 5 * labelScale
 
   local timeWidth = stringUnitsWide(timeStr) * timeScale
   local timeHeight = 5 * timeScale
 
-  local totalHeight = labelHeight + 2 + timeHeight
-  local startY = math.floor((h - totalHeight) / 2) + 1
+  local startY = math.floor((h - timeHeight) / 2) + 1
 
-  local labelX = math.floor((w - labelWidth) / 2) + 1
   local timeX = math.floor((w - timeWidth) / 2) + 1
 
   drawStringScaled(startMon, label, labelX, startY, labelScale, colors.cyan)
-  drawStringScaled(startMon, timeStr, timeX, startY + labelHeight + 2, timeScale, colors.white)
+  drawStringScaled(startMon, timeStr, timeX, startY, timeScale, colors.white)
 end
 
 local function drawStartIdle()
@@ -373,8 +370,24 @@ end
 
 local function drawStartFinished()
   clearMonitor(startMon, colors.black)
-  local _, h = startMon.getSize()
-  drawCenteredText(startMon, "FINISH", math.max(1, math.floor(h / 2)), colors.yellow, colors.black)
+  startMon.setTextScale(0.5)
+
+  local prev = term.current()
+  term.redirect(startMon)
+
+  local w, h = term.getSize()
+  term.redirect(prev)
+
+  local text = "FINISH"
+  local scale = getStringScale(startMon, text, 4, 2)
+
+  local textWidth = stringUnitsWide(text) * scale
+  local textHeight = 5 * scale
+
+  local startX = math.floor((w - textWidth) / 2) + 1
+  local startY = math.floor((h - textHeight) / 2) + 1
+
+  drawStringScaled(startMon, text, startX, startY, scale, colors.yellow)
 end
 
 -- =========================
