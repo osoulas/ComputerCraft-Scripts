@@ -214,9 +214,9 @@ local function drawStartLights(litPairs, goGreen)
 
   local w, h = term.getSize()
 
-  local radius = 2
+  local radius = 4
   local cols = 5
-  local colSpacing = radius * 2 + 3
+  local colSpacing = radius * 2 + 2
   local rowSpacing = radius * 2 + 2
 
   local totalWidth = (cols - 1) * colSpacing
