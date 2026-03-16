@@ -168,53 +168,68 @@ end
 -- =========================
 
 local function clearMonitor(mon, bg)
-  mon.setBackgroundColor(bg or colors.black)
-  mon.clear()
-  mon.setCursorPos(1, 1)
+  local prev = term.current()
+  term.redirect(mon)
+  term.setBackgroundColor(bg or colors.black)
+  term.clear()
+  term.setCursorPos(1, 1)
+  term.redirect(prev)
 end
 
 local function drawCenteredText(mon, text, y, fg, bg)
-  local w, _ = mon.getSize()
-  mon.setBackgroundColor(bg or colors.black)
-  mon.setTextColor(fg or colors.white)
-  local x = math.max(1, math.floor((w - #text) / 2) + 1)
-  mon.setCursorPos(x, y)
-  mon.write(text)
-end
-
-local function drawCircle(mon, x, y, radius, colour)
   local prev = term.current()
   term.redirect(mon)
 
-  paintutils.drawFilledCircle(x, y, radius, colour)
+  local w, _ = term.getSize()
+  term.setBackgroundColor(bg or colors.black)
+  term.setTextColor(fg or colors.white)
+
+  local x = math.max(1, math.floor((w - #text) / 2) + 1)
+  term.setCursorPos(x, y)
+  term.write(text)
+
+  term.redirect(prev)
+end
+
+local function drawFilledCircle(mon, cx, cy, radius, colour)
+  local prev = term.current()
+  term.redirect(mon)
+
+  for dy = -radius, radius do
+    for dx = -radius, radius do
+      if (dx * dx + dy * dy) <= (radius * radius) then
+        paintutils.drawPixel(cx + dx, cy + dy, colour)
+      end
+    end
+  end
 
   term.redirect(prev)
 end
 
 local function drawStartLights(litPairs, goGreen)
+  clearMonitor(startMon, colors.black)
 
-  startMon.setBackgroundColor(colors.black)
-  startMon.clear()
+  local prev = term.current()
+  term.redirect(startMon)
 
-  local w, h = startMon.getSize()
+  local w, h = term.getSize()
 
-  local spacing = 6
   local radius = 2
+  local cols = 5
+  local colSpacing = radius * 2 + 3
+  local rowSpacing = radius * 2 + 2
 
-  local totalWidth = spacing * 4
+  local totalWidth = (cols - 1) * colSpacing
   local startX = math.floor((w - totalWidth) / 2)
-
-  local topRow = math.floor(h/2) - 2
-  local bottomRow = math.floor(h/2) + 2
+  local topY = math.floor(h / 2) - math.floor(rowSpacing / 2)
+  local bottomY = topY + rowSpacing
 
   local darkRed = colors.brown
   local brightRed = colors.red
   local green = colors.lime
 
-  for i = 1,5 do
-
+  for i = 1, cols do
     local colour
-
     if goGreen then
       colour = green
     elseif i <= litPairs then
@@ -223,27 +238,29 @@ local function drawStartLights(litPairs, goGreen)
       colour = darkRed
     end
 
-    local x = startX + (i-1)*spacing
-
-    drawCircle(startMon, x, topRow, radius, colour)
-    drawCircle(startMon, x, bottomRow, radius, colour)
-
+    local x = startX + (i - 1) * colSpacing
+    drawFilledCircle(startMon, x, topY, radius, colour)
+    drawFilledCircle(startMon, x, bottomY, radius, colour)
   end
 
+  term.redirect(prev)
 end
 
 local function drawRunningTime(seconds)
   clearMonitor(startMon, colors.black)
-  startMon.setTextScale(1)
 
-  local text = string.format("%.2f", seconds)
-  local _, h = startMon.getSize()
+  local prev = term.current()
+  term.redirect(startMon)
+  term.setTextScale(1)
+
+  local _, h = term.getSize()
   drawCenteredText(startMon, "TIME", math.max(1, math.floor(h / 2) - 1), colors.cyan, colors.black)
-  drawCenteredText(startMon, text, math.max(2, math.floor(h / 2) + 1), colors.white, colors.black)
+  drawCenteredText(startMon, string.format("%.2f", seconds), math.max(2, math.floor(h / 2) + 1), colors.white, colors.black)
+
+  term.redirect(prev)
 end
 
 local function drawStartIdle()
-  clearMonitor(startMon, colors.black)
   drawStartLights(0, false)
 end
 
