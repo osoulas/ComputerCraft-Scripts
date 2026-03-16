@@ -191,13 +191,15 @@ local function drawCenteredText(mon, text, y, fg, bg)
   term.redirect(prev)
 end
 
-local function drawFilledCircle(mon, cx, cy, radius, colour)
+local function drawFilledEllipse(mon, cx, cy, rx, ry, colour)
   local prev = term.current()
   term.redirect(mon)
 
-  for dy = -radius, radius do
-    for dx = -radius, radius do
-      if (dx * dx + dy * dy) <= (radius * radius) then
+  for dy = -ry, ry do
+    for dx = -rx, rx do
+      local nx = dx / rx
+      local ny = dy / ry
+      if (nx * nx + ny * ny) <= 1 then
         paintutils.drawPixel(cx + dx, cy + dy, colour)
       end
     end
@@ -215,9 +217,11 @@ local function drawStartLights(litPairs, goGreen)
   local w, h = term.getSize()
 
   local radius = 4
+  local rx = radius * 1.5
+  local ry = radius
   local cols = 5
-  local colSpacing = radius * 2 + 2
-  local rowSpacing = radius * 2 + 2
+  local colSpacing = rx * 2 + 3
+  local rowSpacing = ry * 2 + 2
 
   local totalWidth = (cols - 1) * colSpacing
   local startX = math.floor((w - totalWidth) / 2)
@@ -239,8 +243,8 @@ local function drawStartLights(litPairs, goGreen)
     end
 
     local x = startX + (i - 1) * colSpacing
-    drawFilledCircle(startMon, x, topY, radius, colour)
-    drawFilledCircle(startMon, x, bottomY, radius, colour)
+    drawFilledEllipse(startMon, x, topY, rx, ry, colour)
+    drawFilledEllipse(startMon, x, bottomY, rx, ry, colour)
   end
 
   term.redirect(prev)
