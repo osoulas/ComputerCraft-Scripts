@@ -354,7 +354,6 @@ local function drawBestHeader()
 
   local prev = term.current()
   term.redirect(bestMon)
-
   local w, h = term.getSize()
   term.redirect(prev)
 
@@ -363,17 +362,19 @@ local function drawBestHeader()
   local titleHeight = 5 * titleScale
 
   local titleX = math.floor((w - titleWidth) / 2) + 1
-  local titleY = 2
+  local titleY = 3
 
-  local darkYellowShadow = setPaletteFromColour(bestMon, colors.white, colors.yellow, 0.38)
+  local darkYellowShadow = setPaletteFromColour(bestMon, colors.gray, colors.yellow, 0.38)
   drawShadowedStringScaled(bestMon, title, titleX, titleY, titleScale, colors.yellow, darkYellowShadow)
 
-  bestMon.setCursorPos(math.max(1, math.floor((w - #subtitle) / 2) + 1), titleY + titleHeight + 1)
+  local subtitleY = titleY + titleHeight + 2
+
+  bestMon.setCursorPos(math.max(1, math.floor((w - #subtitle) / 2) + 1), subtitleY)
   bestMon.setTextColor(colors.white)
   bestMon.setBackgroundColor(colors.black)
   bestMon.write(subtitle)
 
-  return titleY + titleHeight + 3
+  return subtitleY + 2
 end
 
 local function drawFilledEllipse(mon, cx, cy, rx, ry, colour)
@@ -506,6 +507,7 @@ end
 -- =========================
 
 local function drawBestMonitor()
+  bestMon.setTextScale(1)
   bestMon.setBackgroundColor(colors.black)
   bestMon.clear()
 
@@ -519,11 +521,13 @@ local function drawBestMonitor()
     bestMon.write(text:sub(1, w))
   end
 
+  bestMon.setTextScale(0.5)
   local y = drawBestHeader()
+  bestMon.setTextScale(1)
 
   -- Column layout
-  local posWidth = 4
-  local bestWidth = 9
+  local posWidth = 5
+  local bestWidth = 10
   local nameWidth = math.max(6, w - posWidth - bestWidth - 2)
 
   local header = string.format(
