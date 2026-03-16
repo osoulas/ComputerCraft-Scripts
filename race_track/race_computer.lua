@@ -346,11 +346,22 @@ local function drawRunningTime(seconds)
 
   -- Format time as MM:SS.hh
   local totalHundredths = math.floor(seconds * 100 + 0.5)
-  local minutes = math.floor(totalHundredths / 6000)
+
+  local hours = math.floor(totalHundredths / 360000)
+  local minutes = math.floor((totalHundredths % 360000) / 6000)
   local secs = math.floor((totalHundredths % 6000) / 100)
   local hundredths = totalHundredths % 100
-  local timeStr = string.format("%02d:%02d.%02d", minutes, secs, hundredths)
 
+  local timeStr
+
+  if hours > 0 then
+  -- H:MM:SS
+  timeStr = string.format("%d:%02d:%02d", hours, minutes, secs)
+  else
+  -- MM:SS.hh
+  timeStr = string.format("%02d:%02d.%02d", minutes, secs, hundredths)
+  end
+  
   local scale = getStringScale(startMon, timeStr, 4, 4)
 
   local textWidth = stringUnitsWide(timeStr) * scale
