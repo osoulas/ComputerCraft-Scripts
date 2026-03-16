@@ -33,7 +33,7 @@ if not bestMon then error("Could not wrap best-times monitor") end
 if not modeMon then error("Could not wrap mode monitor") end
 if not sessionMon then error("Could not wrap session monitor") end
 
-startMon.setTextScale(1)
+startMon.setTextScale(0.5)
 bestMon.setTextScale(0.5)
 modeMon.setTextScale(0.5)
 sessionMon.setTextScale(0.5)
@@ -182,48 +182,54 @@ local function drawCenteredText(mon, text, y, fg, bg)
   mon.write(text)
 end
 
-local function drawCircle(mon, x, y, colour)
-  mon.setTextColor(colour)
+local function drawCircle(mon, x, y, radius, colour)
+  local prev = term.current()
+  term.redirect(mon)
 
-  mon.setCursorPos(x, y)
-  mon.write("OO")
+  paintutils.drawFilledCircle(x, y, radius, colour)
 
-  mon.setCursorPos(x, y + 1)
-  mon.write("OO")
+  term.redirect(prev)
 end
 
 local function drawStartLights(litPairs, goGreen)
-  clearMonitor(startMon, colors.black)
+
+  startMon.setBackgroundColor(colors.black)
+  startMon.clear()
 
   local w, h = startMon.getSize()
 
-  local totalCols = 5
-  local xSpacing = 2
-  local rowGap = 1
+  local spacing = 6
+  local radius = 2
 
-  local blockWidth = (totalCols - 1) * xSpacing + 1
-  local startX = math.floor((w - blockWidth) / 2) + 1
-  local startY = math.floor((h - (2 + rowGap)) / 2) + 1
+  local totalWidth = spacing * 4
+  local startX = math.floor((w - totalWidth) / 2)
+
+  local topRow = math.floor(h/2) - 2
+  local bottomRow = math.floor(h/2) + 2
 
   local darkRed = colors.brown
   local brightRed = colors.red
   local green = colors.lime
 
-  for col = 0, 4 do
+  for i = 1,5 do
+
     local colour
 
     if goGreen then
       colour = green
-    elseif (col + 1) <= litPairs then
+    elseif i <= litPairs then
       colour = brightRed
     else
       colour = darkRed
     end
 
-    local x = startX + col * xSpacing
-    drawCircle(startMon, x, startY, colour)
-    drawCircle(startMon, x, startY + 1 + rowGap, colour)
+    local x = startX + (i-1)*spacing
+
+    drawCircle(startMon, x, topRow, radius, colour)
+    drawCircle(startMon, x, bottomRow, radius, colour)
+
   end
+
 end
 
 local function drawRunningTime(seconds)
