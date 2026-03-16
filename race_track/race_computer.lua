@@ -556,6 +556,46 @@ local function drawBestMonitor()
   end
 end
 
+local function drawModeMonitor()
+  modeMon.setBackgroundColor(colors.black)
+  modeMon.clear()
+
+  local function line(y, text, color)
+    modeMon.setCursorPos(1, y)
+    modeMon.setTextColor(color or colors.white)
+    modeMon.write(text)
+  end
+
+  line(1, "MODE / INSTRUCTIONS", colors.yellow)
+  line(3, "Mode: " .. (mode == "race" and "RACE" or "TIME TRIAL"), colors.cyan)
+  line(4, "Phase: " .. string.upper(phase), colors.lightGray)
+
+  local lapDisplay = currentLapTarget or lapSelectorValue()
+  if mode == "race" then
+    line(5, "Laps: " .. tostring(lapDisplay), colors.white)
+  else
+    line(5, "Laps: free session", colors.white)
+  end
+
+  line(7, "Buttons:", colors.orange)
+  line(8, "Left  = toggle mode", colors.white)
+  line(9, "Right = start", colors.white)
+  line(10, "Back  = reset", colors.white)
+
+  line(12, "Ready players:", colors.orange)
+  local y = 13
+  local names = {}
+  for name, _ in pairs(players) do table.insert(names, name) end
+  table.sort(names)
+  for _, name in ipairs(names) do
+    local p = players[name]
+    local status = p.enabled and "YES" or "NO"
+    line(y, string.format("%-12s %s", name:sub(1, 12), status), p.enabled and colors.lime or colors.red)
+    y = y + 1
+    if y > 25 then break end
+  end
+end
+
 local function raceSortKey(a, b)
   local pa, pb = players[a], players[b]
 
