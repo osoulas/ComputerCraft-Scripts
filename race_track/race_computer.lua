@@ -34,7 +34,7 @@ if not modeMon then error("Could not wrap mode monitor") end
 if not sessionMon then error("Could not wrap session monitor") end
 
 startMon.setTextScale(0.5)
-bestMon.setTextScale(0.5)
+bestMon.setTextScale(1)
 modeMon.setTextScale(0.5)
 sessionMon.setTextScale(0.5)
 
@@ -357,18 +357,17 @@ local function drawBestHeader()
   local w, h = term.getSize()
   term.redirect(prev)
 
-  local titleScale = getStringScale(bestMon, title, 6, 18)
+  local titleScale = getStringScale(bestMon, title, 6, 10)
   local titleWidth = stringUnitsWide(title) * titleScale
   local titleHeight = 5 * titleScale
 
   local titleX = math.floor((w - titleWidth) / 2) + 1
-  local titleY = 3
+  local titleY = 2
 
   local darkYellowShadow = setPaletteFromColour(bestMon, colors.gray, colors.yellow, 0.38)
   drawShadowedStringScaled(bestMon, title, titleX, titleY, titleScale, colors.yellow, darkYellowShadow)
 
-  local subtitleY = titleY + titleHeight + 2
-
+  local subtitleY = titleY + titleHeight + 1
   bestMon.setCursorPos(math.max(1, math.floor((w - #subtitle) / 2) + 1), subtitleY)
   bestMon.setTextColor(colors.white)
   bestMon.setBackgroundColor(colors.black)
@@ -507,7 +506,6 @@ end
 -- =========================
 
 local function drawBestMonitor()
-  bestMon.setTextScale(1)
   bestMon.setBackgroundColor(colors.black)
   bestMon.clear()
 
@@ -521,9 +519,7 @@ local function drawBestMonitor()
     bestMon.write(text:sub(1, w))
   end
 
-  bestMon.setTextScale(0.5)
   local y = drawBestHeader()
-  bestMon.setTextScale(1)
 
   -- Column layout
   local posWidth = 5
