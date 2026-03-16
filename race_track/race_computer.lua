@@ -318,7 +318,7 @@ local function drawBestHeader()
   local titleHeight = 5 * titleScale
 
   local titleX = math.floor((w - titleWidth) / 2) + 1
-  local titleY = 1
+  local titleY = 2
 
   drawShadowedStringScaled(bestMon, title, titleX, titleY, titleScale, colors.yellow, colors.gray)
 
@@ -468,6 +468,7 @@ local function drawBestMonitor()
     if y < 1 or y > h then return end
     bestMon.setCursorPos(1, y)
     bestMon.setTextColor(color or colors.white)
+    bestMon.setBackgroundColor(colors.black)
     bestMon.write(text:sub(1, w))
   end
 
