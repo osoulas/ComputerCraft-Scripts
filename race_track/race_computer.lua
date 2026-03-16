@@ -360,7 +360,6 @@ local function drawRunningTime(seconds)
 
   local timeX = math.floor((w - timeWidth) / 2) + 1
 
-  drawStringScaled(startMon, label, labelX, startY, labelScale, colors.cyan)
   drawStringScaled(startMon, timeStr, timeX, startY, timeScale, colors.white)
 end
 
