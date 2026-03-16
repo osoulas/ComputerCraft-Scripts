@@ -343,24 +343,25 @@ local function drawRunningTime(seconds)
   term.redirect(startMon)
 
   local w, h = term.getSize()
-  term.redirect(prev)
 
+  -- Format time as MM:SS.hh
   local totalHundredths = math.floor(seconds * 100 + 0.5)
   local minutes = math.floor(totalHundredths / 6000)
   local secs = math.floor((totalHundredths % 6000) / 100)
   local hundredths = totalHundredths % 100
   local timeStr = string.format("%02d:%02d.%02d", minutes, secs, hundredths)
 
-  local timeScale = getStringScale(startMon, timeStr, 4, h > 12 and 6 or 2)
+  local scale = getStringScale(startMon, timeStr, 4, 4)
 
-  local timeWidth = stringUnitsWide(timeStr) * timeScale
-  local timeHeight = 5 * timeScale
+  local textWidth = stringUnitsWide(timeStr) * scale
+  local textHeight = 5 * scale
 
-  local startY = math.floor((h - timeHeight) / 2) + 1
+  local startX = math.floor((w - textWidth) / 2) + 1
+  local startY = math.floor((h - textHeight) / 2) + 1
 
-  local timeX = math.floor((w - timeWidth) / 2) + 1
+  drawStringScaled(startMon, timeStr, startX, startY, scale, colors.white)
 
-  drawStringScaled(startMon, timeStr, timeX, startY, timeScale, colors.white)
+  term.redirect(prev)
 end
 
 local function drawStartIdle()
