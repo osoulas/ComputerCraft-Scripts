@@ -183,9 +183,13 @@ local function drawCenteredText(mon, text, y, fg, bg)
 end
 
 local function drawCircle(mon, x, y, colour)
-  mon.setCursorPos(x, y)
   mon.setTextColor(colour)
-  mon.write("\7")
+
+  mon.setCursorPos(x, y)
+  mon.write("OO")
+
+  mon.setCursorPos(x, y + 1)
+  mon.write("OO")
 end
 
 local function drawStartLights(litPairs, goGreen)
