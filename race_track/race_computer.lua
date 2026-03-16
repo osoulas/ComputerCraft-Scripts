@@ -282,6 +282,51 @@ local function getStringScale(mon, str, maxWidthPadding, maxHeightPadding)
   return math.max(1, math.min(scaleX, scaleY))
 end
 
+local function getDefaultRGB(col)
+  local defaults = {
+    [colors.white]     = 0xF0F0F0,
+    [colors.orange]    = 0xF2B233,
+    [colors.magenta]   = 0xE57FD8,
+    [colors.lightBlue] = 0x99B2F2,
+    [colors.yellow]    = 0xDEDE6C,
+    [colors.lime]      = 0x7FCC19,
+    [colors.pink]      = 0xF2B2CC,
+    [colors.gray]      = 0x4C4C4C,
+    [colors.lightGray] = 0x999999,
+    [colors.cyan]      = 0x4C99B2,
+    [colors.purple]    = 0xB266E5,
+    [colors.blue]      = 0x3366CC,
+    [colors.brown]     = 0x7F664C,
+    [colors.green]     = 0x57A64E,
+    [colors.red]       = 0xCC4C4C,
+    [colors.black]     = 0x111111
+  }
+
+  local rgb = defaults[col] or 0x000000
+  return colors.unpackRGB(rgb)
+end
+
+local function clamp01(x)
+  if x < 0 then return 0 end
+  if x > 1 then return 1 end
+  return x
+end
+
+local function setPaletteFromColour(mon, paletteSlot, baseColour, factor)
+  local r, g, b = getDefaultRGB(baseColour)
+  r = clamp01(r * factor)
+  g = clamp01(g * factor)
+  b = clamp01(b * factor)
+  mon.setPaletteColor(paletteSlot, r, g, b)
+  return paletteSlot
+end
+
+local function setPaletteFromRGB(mon, paletteSlot, hex)
+  local r, g, b = colors.unpackRGB(hex)
+  mon.setPaletteColor(paletteSlot, r, g, b)
+  return paletteSlot
+end
+
 local function fmtBoardTime(t)
   if not t then return "--:--.--" end
 
@@ -320,10 +365,12 @@ local function drawBestHeader()
   local titleX = math.floor((w - titleWidth) / 2) + 1
   local titleY = 2
 
-  drawShadowedStringScaled(bestMon, title, titleX, titleY, titleScale, colors.yellow, colors.gray)
+  local darkYellowShadow = setPaletteFromColour(bestMon, colors.white, colors.yellow, 0.38)
+  drawShadowedStringScaled(bestMon, title, titleX, titleY, titleScale, colors.yellow, darkYellowShadow)
 
   bestMon.setCursorPos(math.max(1, math.floor((w - #subtitle) / 2) + 1), titleY + titleHeight + 1)
-  bestMon.setTextColor(colors.lightGray)
+  bestMon.setTextColor(colors.white)
+  bestMon.setBackgroundColor(colors.black)
   bestMon.write(subtitle)
 
   return titleY + titleHeight + 3
@@ -485,7 +532,7 @@ local function drawBestMonitor()
   )
   line(y, header, colors.cyan)
   y = y + 1
-  line(y, string.rep("-", math.min(w, posWidth + nameWidth + bestWidth + 2)), colors.gray)
+  line(y, string.rep("-", math.min(w, posWidth + nameWidth + bestWidth + 2)), colors.white)
   y = y + 1
 
   local ranked = {}
@@ -517,11 +564,14 @@ local function drawBestMonitor()
 
     local colour = colors.white
     if i == 1 then
-      colour = colors.yellow
+      -- gold
+      colour = setPaletteFromRGB(bestMon, colors.yellow, 0xD4AF37)
     elseif i == 2 then
-      colour = colors.lightGray
+      -- silver
+      colour = setPaletteFromRGB(bestMon, colors.lightGray, 0xC0C0C0)
     elseif i == 3 then
-      colour = colors.orange
+      -- bronze
+      colour = setPaletteFromRGB(bestMon, colors.orange, 0xCD7F32)
     end
 
     local row = string.format(
