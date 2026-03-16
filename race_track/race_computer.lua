@@ -176,19 +176,100 @@ local function clearMonitor(mon, bg)
   term.redirect(prev)
 end
 
-local function drawCenteredText(mon, text, y, fg, bg)
+local bigFont = {
+  ["0"] = {"111","101","101","101","111"},
+  ["1"] = {"010","110","010","010","111"},
+  ["2"] = {"111","001","111","100","111"},
+  ["3"] = {"111","001","111","001","111"},
+  ["4"] = {"101","101","111","001","001"},
+  ["5"] = {"111","100","111","001","111"},
+  ["6"] = {"111","100","111","101","111"},
+  ["7"] = {"111","001","001","001","001"},
+  ["8"] = {"111","101","111","101","111"},
+  ["9"] = {"111","101","111","001","111"},
+  ["."] = {"0","0","0","0","1"},
+  [":"] = {"0","1","0","1","0"},
+  [" "] = {"0","0","0","0","0"},
+  ["T"] = {"111","010","010","010","010"},
+  ["I"] = {"111","010","010","010","111"},
+  ["M"] = {"101","111","111","101","101"},
+  ["E"] = {"111","100","110","100","111"}
+}
+
+local function charWidth(ch)
+  local patt = bigFont[ch] or bigFont[" "]
+  return #patt[1]
+end
+
+local function stringUnitsWide(str)
+  local total = 0
+  for i = 1, #str do
+    local ch = str:sub(i, i)
+    total = total + charWidth(ch)
+    if i < #str then
+      total = total + 1
+    end
+  end
+  return total
+end
+
+local function drawPixelSafe(px, py, colour)
+  local w, h = term.getSize()
+  if px >= 1 and px <= w and py >= 1 and py <= h then
+    paintutils.drawPixel(px, py, colour)
+  end
+end
+
+local function drawCharScaled(ch, px, py, scale, colour)
+  local patt = bigFont[ch] or bigFont[" "]
+  local pw = #patt[1]
+
+  for row = 1, 5 do
+    local line = patt[row]
+    for col = 1, pw do
+      if line:sub(col, col) == "1" then
+        local bx = px + (col - 1) * scale
+        local by = py + (row - 1) * scale
+
+        for sy = 0, scale - 1 do
+          for sx = 0, scale - 1 do
+            drawPixelSafe(bx + sx, by + sy, colour)
+          end
+        end
+      end
+    end
+  end
+end
+
+local function drawStringScaled(mon, str, px, py, scale, colour)
   local prev = term.current()
   term.redirect(mon)
 
-  local w, _ = term.getSize()
-  term.setBackgroundColor(bg or colors.black)
-  term.setTextColor(fg or colors.white)
-
-  local x = math.max(1, math.floor((w - #text) / 2) + 1)
-  term.setCursorPos(x, y)
-  term.write(text)
+  for i = 1, #str do
+    local ch = str:sub(i, i)
+    drawCharScaled(ch, px, py, scale, colour)
+    px = px + charWidth(ch) * scale
+    if i < #str then
+      px = px + scale
+    end
+  end
 
   term.redirect(prev)
+end
+
+local function getStringScale(mon, str, maxWidthPadding, maxHeightPadding)
+  local prev = term.current()
+  term.redirect(mon)
+
+  local w, h = term.getSize()
+  local totalUnitsWide = stringUnitsWide(str)
+  local totalUnitsHigh = 5
+
+  local scaleX = math.max(1, math.floor((w - (maxWidthPadding or 2)) / totalUnitsWide))
+  local scaleY = math.max(1, math.floor((h - (maxHeightPadding or 2)) / totalUnitsHigh))
+
+  term.redirect(prev)
+  return math.max(1, math.min(scaleX, scaleY))
 end
 
 local function drawFilledEllipse(mon, cx, cy, rx, ry, colour)
@@ -252,16 +333,38 @@ end
 
 local function drawRunningTime(seconds)
   clearMonitor(startMon, colors.black)
+  startMon.setTextScale(0.5)
 
   local prev = term.current()
   term.redirect(startMon)
-  term.setTextScale(1)
 
-  local _, h = term.getSize()
-  drawCenteredText(startMon, "TIME", math.max(1, math.floor(h / 2) - 1), colors.cyan, colors.black)
-  drawCenteredText(startMon, string.format("%.2f", seconds), math.max(2, math.floor(h / 2) + 1), colors.white, colors.black)
-
+  local w, h = term.getSize()
   term.redirect(prev)
+
+  local label = "TIME"
+  local totalHundredths = math.floor(seconds * 100 + 0.5)
+  local minutes = math.floor(totalHundredths / 6000)
+  local secs = math.floor((totalHundredths % 6000) / 100)
+  local hundredths = totalHundredths % 100
+  local timeStr = string.format("%02d:%02d.%02d", minutes, secs, hundredths)
+
+  local labelScale = getStringScale(startMon, label, 4, h > 12 and 8 or 4)
+  local timeScale = getStringScale(startMon, timeStr, 4, h > 12 and 6 or 2)
+
+  local labelWidth = stringUnitsWide(label) * labelScale
+  local labelHeight = 5 * labelScale
+
+  local timeWidth = stringUnitsWide(timeStr) * timeScale
+  local timeHeight = 5 * timeScale
+
+  local totalHeight = labelHeight + 2 + timeHeight
+  local startY = math.floor((h - totalHeight) / 2) + 1
+
+  local labelX = math.floor((w - labelWidth) / 2) + 1
+  local timeX = math.floor((w - timeWidth) / 2) + 1
+
+  drawStringScaled(startMon, label, labelX, startY, labelScale, colors.cyan)
+  drawStringScaled(startMon, timeStr, timeX, startY + labelHeight + 2, timeScale, colors.white)
 end
 
 local function drawStartIdle()
