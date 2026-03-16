@@ -10,10 +10,10 @@ local LAP_SELECTOR_SIDE = "top"
 local MODEM_SIDE        = "bottom"
 
 -- Set these to sides or peripheral names from `peripherals`
-local START_MONITOR_NAME    = "monitor_5"
-local BEST_MONITOR_NAME     = "monitor_1"
-local MODE_MONITOR_NAME     = "monitor_2"
-local SESSION_MONITOR_NAME  = "monitor_3"
+local START_MONITOR_NAME    = "monitor_20"
+local BEST_MONITOR_NAME     = "monitor_18"
+local MODE_MONITOR_NAME     = "monitor_17"
+local SESSION_MONITOR_NAME  = "monitor_9"
 
 local PROTOCOL = "race_net_v1"
 local RECORD_FILE = "central_records.lua"
@@ -63,6 +63,7 @@ local currentLapTarget = nil
 local countdownEndsAt = nil
 local countdownLastShown = nil
 local ttPlayer = nil
+local raceStartEpoch = nil
 
 local players = {}
 
@@ -149,6 +150,7 @@ local function resetAll()
   countdownEndsAt = nil
   countdownLastShown = nil
   currentLapTarget = nil
+  raceStartEpoch = nil
   clearSessionFields()
   send({ type = "reset_lane", target = "*" })
 end
@@ -161,16 +163,89 @@ local function recordBest(playerName, maybeBest)
   ensurePlayer(playerName).allTimeBest = records[playerName]
 end
 
-local function drawStartSignal(text, fg, bg)
-  startMon.setBackgroundColor(bg or colors.black)
-  startMon.clear()
-  startMon.setTextColor(fg or colors.white)
-  local w, h = startMon.getSize()
-  local x = math.max(1, math.floor((w - #text) / 2) + 1)
-  local y = math.floor(h / 2)
-  startMon.setCursorPos(x, y)
-  startMon.write(text)
+-- =========================
+-- START MONITOR DRAWING
+-- =========================
+
+local function clearMonitor(mon, bg)
+  mon.setBackgroundColor(bg or colors.black)
+  mon.clear()
+  mon.setCursorPos(1, 1)
 end
+
+local function drawCenteredText(mon, text, y, fg, bg)
+  local w, _ = mon.getSize()
+  mon.setBackgroundColor(bg or colors.black)
+  mon.setTextColor(fg or colors.white)
+  local x = math.max(1, math.floor((w - #text) / 2) + 1)
+  mon.setCursorPos(x, y)
+  mon.write(text)
+end
+
+local function drawCircle(mon, x, y, colour)
+  mon.setCursorPos(x, y)
+  mon.setTextColor(colour)
+  mon.write("\7")
+end
+
+local function drawStartLights(litPairs, goGreen)
+  clearMonitor(startMon, colors.black)
+
+  local w, h = startMon.getSize()
+
+  local totalCols = 5
+  local xSpacing = 2
+  local rowGap = 1
+
+  local blockWidth = (totalCols - 1) * xSpacing + 1
+  local startX = math.floor((w - blockWidth) / 2) + 1
+  local startY = math.floor((h - (2 + rowGap)) / 2) + 1
+
+  local darkRed = colors.brown
+  local brightRed = colors.red
+  local green = colors.lime
+
+  for col = 0, 4 do
+    local colour
+
+    if goGreen then
+      colour = green
+    elseif (col + 1) <= litPairs then
+      colour = brightRed
+    else
+      colour = darkRed
+    end
+
+    local x = startX + col * xSpacing
+    drawCircle(startMon, x, startY, colour)
+    drawCircle(startMon, x, startY + 1 + rowGap, colour)
+  end
+end
+
+local function drawRunningTime(seconds)
+  clearMonitor(startMon, colors.black)
+  startMon.setTextScale(1)
+
+  local text = string.format("%.2f", seconds)
+  local _, h = startMon.getSize()
+  drawCenteredText(startMon, "TIME", math.max(1, math.floor(h / 2) - 1), colors.cyan, colors.black)
+  drawCenteredText(startMon, text, math.max(2, math.floor(h / 2) + 1), colors.white, colors.black)
+end
+
+local function drawStartIdle()
+  clearMonitor(startMon, colors.black)
+  drawStartLights(0, false)
+end
+
+local function drawStartFinished()
+  clearMonitor(startMon, colors.black)
+  local _, h = startMon.getSize()
+  drawCenteredText(startMon, "FINISH", math.max(1, math.floor(h / 2)), colors.yellow, colors.black)
+end
+
+-- =========================
+-- OTHER MONITORS
+-- =========================
 
 local function drawBestMonitor()
   bestMon.setBackgroundColor(colors.black)
@@ -346,9 +421,14 @@ local function redrawAll()
   drawSessionMonitor()
 
   if phase == "idle" then
-    drawStartSignal("READY", colors.lime, colors.black)
+    drawStartIdle()
   elseif phase == "finished" then
-    drawStartSignal("FINISH", colors.yellow, colors.black)
+    drawStartFinished()
+  elseif phase == "running" and raceStartEpoch then
+    local elapsed = (nowMs() - raceStartEpoch) / 1000
+    if elapsed >= 10 then
+      drawRunningTime(elapsed)
+    end
   end
 end
 
@@ -415,8 +495,9 @@ local function startRaceSession()
   if any then
     mode = "race"
     phase = "countdown"
-    countdownEndsAt = nowMs() + 3000
+    countdownEndsAt = nowMs() + 5000
     countdownLastShown = nil
+    raceStartEpoch = nil
   end
 end
 
@@ -453,8 +534,9 @@ local function startTimeTrialSession()
   })
 
   phase = "countdown"
-  countdownEndsAt = nowMs() + 3000
+  countdownEndsAt = nowMs() + 5000
   countdownLastShown = nil
+  raceStartEpoch = nil
 end
 
 local function handleStartPressed()
@@ -496,7 +578,6 @@ local function handleNetworkMessage(msg)
         maybeEndRace()
       end
     elseif mode == "time_trial" and phase == "running" and ttPlayer == msg.player and not p.finished then
-      -- End the time trial session if the active player toggles off.
       p.active = false
       p.armed = false
       phase = "finished"
@@ -504,7 +585,7 @@ local function handleNetworkMessage(msg)
     end
 
   elseif msg.type == "checkpoint" then
-    -- Optional debug hook; nothing else needed centrally.
+    -- Optional debug hook
 
   elseif msg.type == "lap_complete" then
     p.lapsCompleted = msg.lap or p.lapsCompleted
@@ -568,18 +649,24 @@ end
 local function countdownLoop()
   while true do
     if phase == "countdown" and countdownEndsAt then
-      local remaining = math.ceil((countdownEndsAt - nowMs()) / 1000)
-      if remaining < 0 then remaining = 0 end
+      local remainingMs = countdownEndsAt - nowMs()
 
-      if remaining > 0 then
-        if countdownLastShown ~= remaining then
-          countdownLastShown = remaining
-          drawStartSignal(tostring(remaining), colors.red, colors.black)
+      if remainingMs > 0 then
+        local totalMs = 5000
+        local elapsedMs = totalMs - remainingMs
+        local step = math.floor(elapsedMs / 1000) + 1
+        if step < 0 then step = 0 end
+        if step > 5 then step = 5 end
+
+        if countdownLastShown ~= step then
+          countdownLastShown = step
+          drawStartLights(step, false)
         end
       else
-        drawStartSignal("GO", colors.lime, colors.black)
+        drawStartLights(5, true)
         phase = "running"
         local startEpoch = nowMs()
+        raceStartEpoch = startEpoch
 
         if mode == "race" then
           for name, p in pairs(players) do
@@ -609,7 +696,7 @@ local function countdownLoop()
         sleep(1)
       end
     end
-    sleep(0.1)
+    sleep(0.05)
   end
 end
 
