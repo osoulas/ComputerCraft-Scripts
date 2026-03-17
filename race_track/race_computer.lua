@@ -903,6 +903,24 @@ local function drawSessionMonitor()
       line(y, row, rowColour)
       y = y + 1
     end
+    line(y, "1", rowColour)
+    y = y + 1
+    line(y, "1", rowColour)
+    y = y + 1
+    line(y, "1", rowColour)
+    y = y + 1
+    line(y, "1", rowColour)
+    y = y + 1
+    line(y, "1", rowColour)
+    y = y + 1
+    line(y, "1", rowColour)
+    y = y + 1
+    line(y, "1", rowColour)
+    y = y + 1
+    line(y, "1", rowColour)
+    y = y + 1
+    line(y, "1", rowColour)
+    y = y + 1
 
   else
     if not ttPlayer then
