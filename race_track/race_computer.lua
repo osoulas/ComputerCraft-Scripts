@@ -68,7 +68,7 @@ if not sessionMon then error("Could not wrap session monitor") end
 startMon.setTextScale(0.5)
 bestMon.setTextScale(1)
 modeMon.setTextScale(1)
-sessionMon.setTextScale(1)
+sessionMon.setTextScale(2)
 
 local bigFont = {
   ["0"] = {"111","101","101","101","111"},
@@ -402,7 +402,7 @@ local function drawModeHeader()
 end
 
 local function drawSessionHeader()
-  local title = (mode == "race") and "RACE CONTROL" or "TIME TRIAL"
+  local title = (mode == "race") and "RACE" or "TIME TRIAL"
 
   local prev = term.current()
   term.redirect(sessionMon)
