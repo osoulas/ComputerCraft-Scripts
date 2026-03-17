@@ -880,8 +880,29 @@ local function drawSessionMonitor()
     line(y, " " ..string.rep("-", 23), colors.white)
     y = y + 1
 
-    local names = sessionParticipants()
-    table.sort(names, raceSortKey)
+    local names = {}
+
+    if phase == "idle" then
+      for name, p in pairs(players) do
+        if p.enabled then
+          table.insert(names, name)
+        end
+      end
+
+      table.sort(names, function(a, b)
+        local pa, pb = players[a], players[b]
+        local ba = pa.allTimeBest or records[a]
+        local bb = pb.allTimeBest or records[b]
+
+        if ba == nil and bb == nil then return a < b end
+        if ba == nil then return false end
+        if bb == nil then return true end
+        return ba < bb
+      end)
+    else
+      names = sessionParticipants()
+      table.sort(names, raceSortKey)
+    end
 
     for i, name in ipairs(names) do
       if y > h then break end
@@ -890,26 +911,49 @@ local function drawSessionMonitor()
       local timeCol = "--:--.--"
       local rowColour = colors.white
 
-      if p.finished then
-        timeCol = fmtBoardTime(p.finalTime)
-        rowColour = colors.lime
-      elseif p.dnf then
-        timeCol = "DNF"
-        rowColour = colors.red
-      elseif p.active or p.armed then
-        if p.totalTime then
-          timeCol = fmtBoardTime(p.totalTime)
-        else
-          timeCol = "--:--.--"
+      if phase == "idle" then
+        if not bestRecorded then
+          displayPlace = "-"
         end
 
+        if bestRecorded then
+          timeCol = fmtBoardTime(bestRecorded)
+        end
+
+        rowColour = p.enabled and colors.lime or colors.white
+      else
+        if p.finished then
+          timeCol = fmtBoardTime(p.finalTime)
+          rowColour = colors.lime
+        elseif p.dnf then
+          timeCol = "DNF"
+          rowColour = colors.red
+        elseif p.active or p.armed then
+          if p.totalTime then
+            timeCol = fmtBoardTime(p.totalTime)
+          else
+            timeCol = "--:--.--"
+          end
+        end
+      end
+
+      local currentLap
+      if phase == "idle" then
+        currentLap = 0
+      else
+        currentLap = math.min((p.lapsCompleted or 0) + 1, currentLapTarget or lapSelectorValue())
+      end
+      if p.finished then
+        currentLap = currentLapTarget or lapSelectorValue()
+      elseif p.dnf and (p.lapsCompleted or 0) > 0 then
+        currentLap = (p.lapsCompleted or 0) + 1
       end
 
       local row = string.format(
         " %-" .. posWidth .. "d %-" .. nameWidth .. "s %-" .. lapsWidth .. "d %" .. timeWidth .. "s",
         i,
         name:sub(1, nameWidth),
-        p.lapsCompleted or 0,
+        currentLap,
         timeCol
       )
 
