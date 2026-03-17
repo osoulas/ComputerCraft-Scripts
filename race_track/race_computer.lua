@@ -834,12 +834,25 @@ local function drawSessionMonitor()
   local y = drawSessionHeader()
 
   local statusText = string.upper(phase)
-  line(y, "Status: " .. statusText, colors.cyan)
-  y = y + 2
 
   if mode == "race" then
     local laps = currentLapTarget or lapSelectorValue()
-    line(y, "Standings   Laps: " .. tostring(laps), colors.orange)
+
+    local statusLabel = "Status: " .. statusText
+    local lapsLabel = "Laps: " .. tostring(laps)
+
+    sessionMon.setBackgroundColor(colors.black)
+
+    -- left-aligned status
+    sessionMon.setCursorPos(leftPad, y)
+    sessionMon.setTextColor(colors.cyan)
+    sessionMon.write(statusLabel)
+
+    -- right-aligned laps
+    sessionMon.setCursorPos(w - #lapsLabel - leftPad + 1, y)
+    sessionMon.setTextColor(colors.orange)
+    sessionMon.write(lapsLabel)
+
     y = y + 1
 
     local leftPad = 1
@@ -923,6 +936,8 @@ local function drawSessionMonitor()
     y = y + 1
 
   else
+    line(y, "Status: " .. statusText, colors.cyan)
+    y = y + 2
     if not ttPlayer then
       line(y, "No active player selected.", colors.red)
       y = y + 1
