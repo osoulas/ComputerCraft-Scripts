@@ -401,6 +401,27 @@ local function drawModeHeader()
   return titleY + titleHeight + 2
 end
 
+local function drawSessionHeader()
+  local title = (mode == "race") and "RACE CONTROL" or "TIME TRIAL"
+
+  local prev = term.current()
+  term.redirect(sessionMon)
+  local w, h = term.getSize()
+  term.redirect(prev)
+
+  local titleScale = 1
+  local titleWidth = stringUnitsWide(title) * titleScale
+  local titleHeight = 5 * titleScale
+
+  local titleX = math.floor((w - titleWidth) / 2) + 1
+  local titleY = 2
+
+  local darkYellowShadow = setPaletteFromColour(sessionMon, colors.gray, colors.yellow, 0.38)
+  drawShadowedStringScaled(sessionMon, title, titleX, titleY, titleScale, colors.yellow, darkYellowShadow)
+
+  return titleY + titleHeight + 2
+end
+
 local function drawBestHeader()
   local title = "BEST TIMES"
   local subtitle = "ALL-TIME RANKING"
@@ -798,62 +819,122 @@ local function drawSessionMonitor()
   sessionMon.setBackgroundColor(colors.black)
   sessionMon.clear()
 
+  local w, h = sessionMon.getSize()
+  local leftPad = 2
+
   local function line(y, text, color)
-    sessionMon.setCursorPos(1, y)
+    if y < 1 or y > h then return end
+    sessionMon.setCursorPos(leftPad, y)
     sessionMon.setTextColor(color or colors.white)
-    sessionMon.write(text)
+    sessionMon.setBackgroundColor(colors.black)
+    sessionMon.write(text:sub(1, math.max(0, w - leftPad + 1)))
   end
 
+  local y = drawSessionHeader()
+
+  local statusText = string.upper(phase)
+  line(y, "Status: " .. statusText, colors.cyan)
+  y = y + 2
+
   if mode == "race" then
-    line(1, "CURRENT RACE", colors.yellow)
-    line(2, "PL  NAME         BEST    LAPS  FINAL", colors.cyan)
+    local laps = currentLapTarget or lapSelectorValue()
+    line(y, "Standings   Laps: " .. tostring(laps), colors.orange)
+    y = y + 1
+
+    local posWidth = 3
+    local bestWidth = 9
+    local lapsWidth = 5
+    local finalWidth = 8
+    local innerWidth = math.max(10, w - leftPad - 1)
+    local nameWidth = math.max(6, innerWidth - posWidth - bestWidth - lapsWidth - finalWidth - 4)
+
+    local header = string.format(
+      "%-" .. posWidth .. "s %-" .. nameWidth .. "s %" .. bestWidth .. "s %" .. lapsWidth .. "s %" .. finalWidth .. "s",
+      "PL", "NAME", "BEST", "LAPS", "FINAL"
+    )
+    line(y, header, colors.lightBlue)
+    y = y + 1
+    line(y, string.rep("-", math.min(innerWidth, #header)), colors.white)
+    y = y + 1
 
     local names = sessionParticipants()
     table.sort(names, raceSortKey)
 
-    local y = 3
     for i, name in ipairs(names) do
+      if y > h then break end
       local p = players[name]
+
       local finalCol = "--"
+      local rowColour = colors.white
+
       if p.finished then
-        finalCol = fmtTime(p.finalTime)
+        finalCol = fmtBoardTime(p.finalTime)
+        rowColour = colors.lime
       elseif p.dnf then
         finalCol = "DNF"
+        rowColour = colors.red
       elseif p.active or p.armed then
         finalCol = "RUN"
+        rowColour = colors.white
       end
 
-      line(y, string.format(
-        "%-3d %-12s %-7s %-5d %s",
+      local row = string.format(
+        "%-" .. posWidth .. "d %-" .. nameWidth .. "s %" .. bestWidth .. "s %" .. lapsWidth .. "d %" .. finalWidth .. "s",
         i,
-        name:sub(1, 12),
-        fmtTime(p.bestLapSession),
+        name:sub(1, nameWidth),
+        fmtBoardTime(p.bestLapSession),
         p.lapsCompleted or 0,
         finalCol
-      ), colors.white)
+      )
+
+      line(y, row, rowColour)
       y = y + 1
-      if y > 24 then break end
     end
 
   else
-    line(1, "TIME TRIAL", colors.yellow)
     if not ttPlayer then
-      line(3, "No active player selected", colors.red)
-      line(5, "Enable exactly one lane,", colors.white)
-      line(6, "then press Start.", colors.white)
+      line(y, "No active player selected.", colors.red)
+      y = y + 1
+      line(y, "Ready exactly one player, then", colors.white)
+      y = y + 1
+      line(y, "press the button next to pole.", colors.white)
       return
     end
 
     local p = players[ttPlayer]
-    line(3, "Player: " .. ttPlayer, colors.cyan)
-    line(4, "All-time best: " .. fmtTime(p.allTimeBest), colors.white)
-    line(6, "Session laps:", colors.orange)
 
-    local y = 7
+    line(y, "Player: " .. ttPlayer, colors.orange)
+    y = y + 1
+    line(y, "All-time best: " .. fmtBoardTime(p.allTimeBest), colors.lightBlue)
+    y = y + 2
+
+    line(y, "Session laps:", colors.orange)
+    y = y + 1
+
+    if #p.sessionLaps == 0 then
+      line(y, "No laps recorded yet.", colors.gray)
+      return
+    end
+
+    local lapNumWidth = 4
+    local timeWidth = 10
+
     for i, lap in ipairs(p.sessionLaps) do
-      line(y, string.format("%-3d %s", i, fmtTime(lap)), colors.white)
+      if y > h then break end
+
+      local colour = colors.white
+      if p.allTimeBest and math.abs(lap - p.allTimeBest) < 0.0005 then
+        colour = colors.lime
+      end
+
+      local row = string.format(
+        "%-" .. lapNumWidth .. "d %" .. timeWidth .. "s",
+        i,
+        fmtBoardTime(lap)
+      )
+
+      line(y, row, colour)
       y = y + 1
-      if y > 24 then break end
     end
   end
 end
