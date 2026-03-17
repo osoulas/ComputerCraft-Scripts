@@ -469,7 +469,6 @@ local function drawMonitor()
   writeRight(ry, "Session", colors.orange); ry = ry + 1
   writeRight(ry, "Best:  " .. fmtBoardTime(state.bestLapSession), colors.white); ry = ry + 1
   writeRight(ry, "Lap:   " .. tostring(currentLap), colors.white); ry = ry + 1
-  writeRight(ry, "Done:  " .. tostring(state.lapsCompleted or 0), colors.white); ry = ry + 1
   writeRight(ry, "Total: " .. fmtBoardTime(runningTotal), colors.white); ry = ry + 1
 
   ry = ry + 1
