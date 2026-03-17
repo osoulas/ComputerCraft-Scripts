@@ -858,13 +858,13 @@ local function drawSessionMonitor()
     end
 
     local header = string.format(
-    "%-" .. posWidth .. "s %-" .. nameWidth .. "s %-" .. lapsWidth .. "s %" .. timeWidth .. "s",
+    " " .. "%-" .. posWidth .. "s %-" .. nameWidth .. "s %-" .. lapsWidth .. "s %" .. timeWidth .. "s",
     "PL", "NAME", "LAP", "TIME"
     )
     line(y, header, colors.lightBlue)
     y = y + 1
 
-    line(y, string.rep("-", 22), colors.white)
+    line(y, " " ..string.rep("-", 23), colors.white)
     y = y + 1
 
     local names = sessionParticipants()
@@ -893,7 +893,7 @@ local function drawSessionMonitor()
       end
 
       local row = string.format(
-        "%-" .. posWidth .. "d %-" .. nameWidth .. "s %-" .. lapsWidth .. "d %" .. timeWidth .. "s",
+        " %-" .. posWidth .. "d %-" .. nameWidth .. "s %-" .. lapsWidth .. "d %" .. timeWidth .. "s",
         i,
         name:sub(1, nameWidth),
         p.lapsCompleted or 0,
