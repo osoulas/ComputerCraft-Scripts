@@ -729,7 +729,7 @@ local function drawModeMonitor()
     line(y, "Time trial mode:", colors.orange)
     y = y + 1
 
-    local readyColour = (readyCount > 1) and colors.red or colors.white
+    local readyColour = (readyCount > 1) and colors.red or colors.lime
     line(y, "Only one player should be ready.", readyColour)
     y = y + 1
 
