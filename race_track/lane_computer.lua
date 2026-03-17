@@ -269,6 +269,9 @@ local function drawLaneHeader(title, maxWidth)
   local darkYellowShadow = setPaletteFromColour(mon, colors.gray, colors.yellow, 0.38)
   drawShadowedStringScaled(mon, title, titleX, titleY, titleScale, colors.yellow, darkYellowShadow)
 
+  mon.setBackgroundColor(colors.black)
+  mon.setTextColor(colors.white)
+
   return titleY + titleHeight + 2
 end
 
@@ -393,6 +396,7 @@ local function drawMonitor()
   local function writeAt(x, y, text, colour)
     if y < 1 or y > h or x > w then return end
     mon.setCursorPos(x, y)
+    mon.setBackgroundColor(colors.black)
     mon.setTextColor(colour or colors.white)
     mon.write(tostring(text):sub(1, math.max(0, w - x + 1)))
   end
@@ -429,7 +433,7 @@ local function drawMonitor()
   end
 
   -- LEFT COLUMN
-  local y = drawLaneHeader(PLAYER_NAME, leftW)
+  local y = drawLaneHeader(string.upper(PLAYER_NAME), leftW)
 
   writeLeft(y, "Mode: ", state.mode == "race" and "RACE" or "TIME TRIAL", colors.cyan); y = y + 1
   writeLeft(y, "State: ", state.stateLabel, colors.lightGray); y = y + 1
