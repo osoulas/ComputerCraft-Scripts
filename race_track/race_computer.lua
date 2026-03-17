@@ -944,7 +944,7 @@ local function drawSessionMonitor()
       end
 
       local row = string.format(
-        " %-" .. posWidth .. "s %-" .. nameWidth .. "s %-" .. lapsWidth .. "s %" .. timeWidth .. "s",
+        " %-" .. posWidth .. "s %-" .. nameWidth .. "s %-" .. lapsWidth .. "d %" .. timeWidth .. "s",
         displayPlace,
         name:sub(1, nameWidth),
         currentLap,
