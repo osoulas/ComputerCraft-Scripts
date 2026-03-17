@@ -403,7 +403,7 @@ local function drawModeHeader()
 end
 
 local function drawSessionHeader()
-  local title = (mode == "race") and "RACE" or "TIME TRIAL"
+  local title = (mode == "race") and "RACE" or "TT MODE"
 
   local prev = term.current()
   term.redirect(sessionMon)
