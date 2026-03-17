@@ -844,7 +844,7 @@ local function drawSessionMonitor()
 
     local leftPad = 1
 
-    local posWidth = 1
+    local posWidth = 2
     local nameWidth = 7
     local lapsWidth = 3
     local timeWidth = 8
