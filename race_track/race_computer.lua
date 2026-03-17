@@ -849,7 +849,7 @@ local function drawSessionMonitor()
     sessionMon.write(statusLabel)
 
     -- right-aligned laps
-    sessionMon.setCursorPos(w - #lapsLabel - leftPad, y)
+    sessionMon.setCursorPos(w - #lapsLabel - leftPad+2, y)
     sessionMon.setTextColor(colors.orange)
     sessionMon.write(lapsLabel)
 
@@ -916,24 +916,6 @@ local function drawSessionMonitor()
       line(y, row, rowColour)
       y = y + 1
     end
-    line(y, "1", rowColour)
-    y = y + 1
-    line(y, "1", rowColour)
-    y = y + 1
-    line(y, "1", rowColour)
-    y = y + 1
-    line(y, "1", rowColour)
-    y = y + 1
-    line(y, "1", rowColour)
-    y = y + 1
-    line(y, "1", rowColour)
-    y = y + 1
-    line(y, "1", rowColour)
-    y = y + 1
-    line(y, "1", rowColour)
-    y = y + 1
-    line(y, "1", rowColour)
-    y = y + 1
 
   else
     line(y, "Status: " .. statusText, colors.cyan)
