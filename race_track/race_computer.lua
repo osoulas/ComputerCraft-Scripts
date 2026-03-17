@@ -956,7 +956,11 @@ local function drawSessionMonitor()
     end
 
   else
-    line(y, "Status: " .. statusText, colors.cyan)
+    local statusLabel = statusText
+    -- left-aligned status
+    sessionMon.setCursorPos(leftPad, y)
+    sessionMon.setTextColor(colors.cyan)
+    sessionMon.write(statusLabel)
     y = y + 2
 
     local readyNames = {}
@@ -973,20 +977,24 @@ local function drawSessionMonitor()
     end
 
     if not displayPlayer then
-      line(y, "No active player.", colors.red)
-      y = y + 1 
-      line(y, "Ready only one player.", colors.white)
-      y = y + 1
-      line(y, "Start button is next", colors.white)
-      y = y + 1
-      line(y, "to pole position.", colors.white)
+      line(y + 2, "No active player.", colors.red)
+      line(y + 3, "Ready only one player.", colors.white)
+      line(y + 4, "Start button is next", colors.white)
+      line(y + 5, "to pole position.", colors.white)
       return
     end
 
     local p = players[displayPlayer]
+    local playerLabel = "Player: " .. displayPlayer
 
-    line(y, "Player: " .. displayPlayer, colors.orange)
+    sessionMon.setBackgroundColor(colors.black)
+
+    -- right-aligned player
+    sessionMon.setCursorPos(w - #playerLabel - leftPad + 2, y)
+    sessionMon.setTextColor(colors.orange)
+    sessionMon.write(playerLabel)
     y = y + 1
+
     line(y, "All-time best: " .. fmtBoardTime(p.allTimeBest), colors.lightBlue)
     y = y + 2
 
