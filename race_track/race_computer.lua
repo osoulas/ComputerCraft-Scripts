@@ -958,9 +958,23 @@ local function drawSessionMonitor()
   else
     line(y, "Status: " .. statusText, colors.cyan)
     y = y + 2
-    if not ttPlayer then
+
+    local readyNames = {}
+    for name, p in pairs(players) do
+      if p.enabled then
+        table.insert(readyNames, name)
+      end
+    end
+    table.sort(readyNames)
+
+    local displayPlayer = ttPlayer
+    if not displayPlayer and #readyNames == 1 then
+      displayPlayer = readyNames[1]
+    end
+
+    if not displayPlayer then
       line(y, "No active player.", colors.red)
-      y = y + 1
+      y = y + 1 
       line(y, "Ready only one player.", colors.white)
       y = y + 1
       line(y, "Start button is next", colors.white)
@@ -969,9 +983,9 @@ local function drawSessionMonitor()
       return
     end
 
-    local p = players[ttPlayer]
+    local p = players[displayPlayer]
 
-    line(y, "Player: " .. ttPlayer, colors.orange)
+    line(y, "Player: " .. displayPlayer, colors.orange)
     y = y + 1
     line(y, "All-time best: " .. fmtBoardTime(p.allTimeBest), colors.lightBlue)
     y = y + 2
