@@ -373,7 +373,7 @@ local function drawBestHeader()
   local darkYellowShadow = setPaletteFromColour(bestMon, colors.gray, colors.yellow, 0.38)
   drawShadowedStringScaled(bestMon, title, titleX, titleY, titleScale, colors.yellow, darkYellowShadow)
 
-  local subtitleY = titleY + titleHeight + 1
+  local subtitleY = titleY + titleHeight + 2
   bestMon.setCursorPos(math.max(1, math.floor((w - #subtitle) / 2) + 1), subtitleY)
   bestMon.setTextColor(colors.white)
   bestMon.setBackgroundColor(colors.black)
@@ -571,7 +571,7 @@ local function drawBestMonitor()
     local colour = colors.white
     if i == 1 then
       -- gold
-      colour = setPaletteFromRGB(bestMon, colors.yellow, 0xD4AF37)
+      colour = setPaletteFromRGB(bestMon, colors.brown, 0xD4AF37)
     elseif i == 2 then
       -- silver
       colour = setPaletteFromRGB(bestMon, colors.lightGray, 0xC0C0C0)
