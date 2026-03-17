@@ -843,15 +843,14 @@ local function drawSessionMonitor()
     y = y + 1
 
     local posWidth = 3
-    local bestWidth = 9
-    local lapsWidth = 5
-    local finalWidth = 8
+    local lapsWidth = 4
+    local timeWidth = 10
     local innerWidth = math.max(10, w - leftPad - 1)
-    local nameWidth = math.max(6, innerWidth - posWidth - bestWidth - lapsWidth - finalWidth - 4)
+    local nameWidth = math.max(6, innerWidth - posWidth - lapsWidth - timeWidth - 4)
 
     local header = string.format(
-      "%-" .. posWidth .. "s %-" .. nameWidth .. "s %" .. bestWidth .. "s %" .. lapsWidth .. "s %" .. finalWidth .. "s",
-      "PL", "NAME", "BEST", "LAPS", "FINAL"
+      "%-" .. posWidth .. "s %-" .. nameWidth .. "s %" .. lapsWidth .. "s %" .. timeWidth .. "s",
+      "PL", "NAME", "LAP", "TIME"
     )
     line(y, header, colors.lightBlue)
     y = y + 1
@@ -879,13 +878,25 @@ local function drawSessionMonitor()
         rowColour = colors.white
       end
 
+      local timeCol = "--"
+      local rowColour = colors.white
+
+      if p.finished then
+        timeCol = fmtBoardTime(p.finalTime)
+        rowColour = colors.lime
+      elseif p.dnf then
+        timeCol = "DNF"
+        rowColour = colors.red
+      elseif p.active or p.armed then
+        timeCol = fmtBoardTime(p.totalTime)
+      end
+
       local row = string.format(
-        "%-" .. posWidth .. "d %-" .. nameWidth .. "s %" .. bestWidth .. "s %" .. lapsWidth .. "d %" .. finalWidth .. "s",
+        "%-" .. posWidth .. "d %-" .. nameWidth .. "s %" .. lapsWidth .. "d %" .. timeWidth .. "s",
         i,
         name:sub(1, nameWidth),
-        fmtBoardTime(p.bestLapSession),
         p.lapsCompleted or 0,
-        finalCol
+        timeCol
       )
 
       line(y, row, rowColour)
