@@ -357,7 +357,7 @@ local function drawBestHeader()
   local w, h = term.getSize()
   term.redirect(prev)
 
-  local titleScale = math.min(2, getStringScale(bestMon, title, 2, h - 8))
+  local titleScale = 1
   local titleWidth = stringUnitsWide(title) * titleScale
   local titleHeight = 5 * titleScale
 
