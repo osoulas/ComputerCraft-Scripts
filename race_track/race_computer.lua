@@ -1001,7 +1001,7 @@ local function drawSessionMonitor()
     sessionMon.setCursorPos(w - #playerLabel - leftPad + 2, y)
     sessionMon.setTextColor(colors.orange)
     sessionMon.write(playerLabel)
-    y = y + 1
+    y = y + 2
 
     line(y, "All-time best: " .. fmtBoardTime(p.allTimeBest), colors.lightBlue)
     y = y + 2
@@ -1049,24 +1049,6 @@ local function drawSessionMonitor()
       line(y, row, colour)
       y = y + 1
     end
-    line(y, '1', colour)
-    y = y + 1
-    line(y, '1', colour)
-    y = y + 1
-    line(y, '1', colour)
-    y = y + 1
-    line(y, '1', colour)
-    y = y + 1
-    line(y, '1', colour)
-    y = y + 1
-    line(y, '1', colour)
-    y = y + 1
-    line(y, '1', colour)
-    y = y + 1
-    line(y, '1', colour)
-    y = y + 1
-    line(y, '1', colour)
-    y = y + 1
   end
 end
 
