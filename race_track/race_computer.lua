@@ -403,7 +403,7 @@ local function drawModeHeader()
 end
 
 local function drawSessionHeader()
-  local title = (mode == "race") and "RACE" or "TT MODE"
+  local title = (mode == "race") and "RACE" or "TRIAL"
 
   local prev = term.current()
   term.redirect(sessionMon)
@@ -959,11 +959,13 @@ local function drawSessionMonitor()
     line(y, "Status: " .. statusText, colors.cyan)
     y = y + 2
     if not ttPlayer then
-      line(y, "No active player selected.", colors.red)
+      line(y, "No active player.", colors.red)
       y = y + 1
-      line(y, "Ready exactly one player, then", colors.white)
+      line(y, "Ready only one player.", colors.white)
       y = y + 1
-      line(y, "press the button next to pole.", colors.white)
+      line(y, "Start button is next", colors.white)
+      y = y + 1
+      line(y, "to pole position.", colors.white)
       return
     end
 
