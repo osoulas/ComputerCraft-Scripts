@@ -106,6 +106,20 @@ local bigFont = {
   [" "] = {"0","0","0","0","0"}
 }
 
+local function fmtBoardTime(t)
+  if not t then
+    return "--:--.--"
+  end
+
+  local totalHundredths = math.floor(t * 100 + 0.5)
+
+  local minutes = math.floor(totalHundredths / 6000)
+  local secs = math.floor((totalHundredths % 6000) / 100)
+  local hundredths = totalHundredths % 100
+
+  return string.format("%02d:%02d.%02d", minutes, secs, hundredths)
+end
+
 local function charWidth(ch)
   local patt = bigFont[ch] or bigFont[" "]
   return #patt[1]
@@ -446,17 +460,17 @@ local function drawMonitor()
   ); y = y + 1
 
   y = y + 1
-  writeLeft(y, "All-time best: ", fmtTime(state.allTimeBest), colors.white); y = y + 1
-  writeLeft(y, "Prev lap: ", fmtTime(state.previousLapAllSessions), colors.white); y = y + 1
+  writeLeft(y, "All-time best: ", fmtBoardTime(state.allTimeBest), colors.white); y = y + 1
+  writeLeft(y, "Prev lap: ", fmtBoardTime(state.previousLapAllSessions), colors.white); y = y + 1
   writeLeft(y, "All-time laps: ", tostring(state.allTimeLapsCompleted or 0), colors.white); y = y + 1
 
   -- RIGHT COLUMN
   local ry = 1
   writeRight(ry, "Session", colors.orange); ry = ry + 1
-  writeRight(ry, "Best:  " .. fmtTime(state.bestLapSession), colors.white); ry = ry + 1
+  writeRight(ry, "Best:  " .. fmtBoardTime(state.bestLapSession), colors.white); ry = ry + 1
   writeRight(ry, "Lap:   " .. tostring(currentLap), colors.white); ry = ry + 1
   writeRight(ry, "Done:  " .. tostring(state.lapsCompleted or 0), colors.white); ry = ry + 1
-  writeRight(ry, "Total: " .. fmtTime(runningTotal), colors.white); ry = ry + 1
+  writeRight(ry, "Total: " .. fmtBoardTime(runningTotal), colors.white); ry = ry + 1
 
   ry = ry + 1
   writeRight(ry, "Times", colors.orange); ry = ry + 1
@@ -485,7 +499,7 @@ local function drawMonitor()
     local row = string.format(
       "%-2d %7s %6s",
       i,
-      fmtTime(lapTime),
+      fmtBoardTime(lapTime),
       deltaText
     )
 
