@@ -717,7 +717,7 @@ local function drawModeMonitor()
     y = y + 1
     line(y, "All ready players race together.", colors.white)
     y = y + 1
-    line(y, "To ready up, flick the lever in your pit.", colors.white)
+    line(y, "To ready, flick the lever in your pit.", colors.white)
     y = y + 1
     line(y, "To start, press the button next to", colors.white)
     y = y + 1
@@ -733,7 +733,7 @@ local function drawModeMonitor()
     line(y, "Only one player should be ready.", readyColour)
     y = y + 1
 
-    line(y, "To ready up, flick the lever in your pit.", colors.white)
+    line(y, "To ready, flick the lever in your pit.", colors.white)
     y = y + 1
     line(y, "To start, press the button next to", colors.white)
     y = y + 1
@@ -760,30 +760,6 @@ local function drawModeMonitor()
     line(y, string.format("%-12s %s", name:sub(1, 12), ready), colour)
     y = y + 1
   end
-  line(y, "1", colors.white)
-  y = y + 1
-  line(y, "2", colors.white)
-  y = y + 1
-  line(y, "3", colors.white)
-  y = y + 1
-  line(y, "4", colors.white)
-  y = y + 1
-  line(y, "5", colors.white)
-  y = y + 1
-  line(y, "6", colors.white)
-  y = y + 1
-  line(y, "7", colors.white)
-  y = y + 1
-  line(y, "8", colors.white)
-  y = y + 1
-  line(y, "1", colors.white)
-  y = y + 1
-  line(y, "1", colors.white)
-  y = y + 1
-  line(y, "1", colors.white)
-  y = y + 1
-  line(y, "1", colors.white)
-  y = y + 1
 
 end
 
