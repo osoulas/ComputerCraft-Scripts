@@ -357,9 +357,21 @@ local function drawBestHeader()
   local w, h = term.getSize()
   term.redirect(prev)
 
-  local titleScale = getStringScale(bestMon, title, 6, 10)
+  -- Leave room for subtitle + table header + at least a few rows
+  local maxHeaderHeight = math.max(5, math.floor(h * 0.3))
+
+  local titleScale = getStringScale(bestMon, title, 2, h - maxHeaderHeight)
+  if titleScale < 1 then titleScale = 1 end
+
   local titleWidth = stringUnitsWide(title) * titleScale
   local titleHeight = 5 * titleScale
+
+  -- If it still doesn't fit horizontally, reduce until it does
+  while titleScale > 1 and titleWidth > (w - 2) do
+    titleScale = titleScale - 1
+    titleWidth = stringUnitsWide(title) * titleScale
+    titleHeight = 5 * titleScale
+  end
 
   local titleX = math.floor((w - titleWidth) / 2) + 1
   local titleY = 2
