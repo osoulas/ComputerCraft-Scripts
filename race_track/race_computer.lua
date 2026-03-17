@@ -849,7 +849,7 @@ local function drawSessionMonitor()
     sessionMon.write(statusLabel)
 
     -- right-aligned laps
-    sessionMon.setCursorPos(w - #lapsLabel - leftPad + 1, y)
+    sessionMon.setCursorPos(w - #lapsLabel - leftPad, y)
     sessionMon.setTextColor(colors.orange)
     sessionMon.write(lapsLabel)
 
