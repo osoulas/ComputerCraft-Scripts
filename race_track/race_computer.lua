@@ -912,13 +912,7 @@ local function drawSessionMonitor()
       local rowColour = colors.white
 
       if phase == "idle" then
-        if not bestRecorded then
-          displayPlace = "-"
-        end
-
-        if bestRecorded then
-          timeCol = fmtBoardTime(bestRecorded)
-        end
+        displayPlace = "-"
 
         rowColour = colors.white
       else
