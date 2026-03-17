@@ -224,6 +224,7 @@ local function onValidLap()
     type = "lap_complete",
     lap = state.lapsCompleted,
     lapTime = lapTime,
+    previousBest = previousBest,
     bestLapSession = state.bestLapSession,
     allTimeBest = state.allTimeBest,
     totalTime = state.totalTime,
