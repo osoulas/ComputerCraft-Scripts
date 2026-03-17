@@ -1063,23 +1063,32 @@ local function redrawAll()
     drawStartFinished()
   elseif phase == "running" then
     local elapsed = nil
+    local now = nowMs()
 
-    if mode == "time_trial" and ttLapStartEpoch then
-      if ttHoldUntil and nowMs() < ttHoldUntil then
-        -- show frozen lap time
+    if mode == "time_trial" then
+      -- 1. show frozen lap time if within hold window
+      if ttHoldUntil and now < ttHoldUntil then
         drawRunningTime(ttHoldTime)
         return
       end
 
+      -- 2. normal lap timer
       if ttLapStartEpoch then
-        elapsed = (nowMs() - ttLapStartEpoch) / 1000
+        elapsed = (now - ttLapStartEpoch) / 1000
       end
-    elseif raceStartEpoch then
-      elapsed = (nowMs() - raceStartEpoch) / 1000
-    end
 
-    if elapsed and (mode == "time_trial" or elapsed >= 10) then
-      drawRunningTime(elapsed)
+      -- 3. apply 2s startup delay
+      if elapsed and elapsed >= 2 then
+        drawRunningTime(elapsed)
+      end
+
+    elseif raceStartEpoch then
+      elapsed = (now - raceStartEpoch) / 1000
+
+      -- keep original 10s delay for race
+      if elapsed >= 10 then
+        drawRunningTime(elapsed)
+      end
     end
   end
 end
