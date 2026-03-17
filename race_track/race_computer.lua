@@ -679,16 +679,22 @@ local function drawModeMonitor()
   modeMon.clear()
 
   local w, h = modeMon.getSize()
+  local leftPad = 2
 
   local function line(y, text, color)
     if y < 1 or y > h then return end
-    modeMon.setCursorPos(1, y)
+    modeMon.setCursorPos(leftPad, y)
     modeMon.setTextColor(color or colors.white)
     modeMon.setBackgroundColor(colors.black)
-    modeMon.write(text:sub(1, w))
+    modeMon.write(text:sub(1, math.max(0, w - leftPad + 1)))
   end
 
   local y = drawModeHeader()
+
+  line(y, "Welcome to Mine Kart, select racing mode", colors.white)
+  y = y + 1
+  line(y, "with the toggle on the left.", colors.white)
+  y = y + 2
 
   local modeText = (mode == "race") and "RACE" or "TIME TRIAL"
   local statusText = string.upper(phase)
@@ -701,7 +707,13 @@ local function drawModeMonitor()
     y = y + 1
     line(y, "All ready players race together.", colors.white)
     y = y + 1
-    line(y, "Laps: " .. tostring(laps) .. ".", colors.white)
+    line(y, "Laps: " .. tostring(laps) .. " (change with lever to", colors.white)
+    y = y + 1
+    line(y, "the left).", colors.white)
+    y = y + 1
+    line(y, "Press the start button next to pole", colors.white)
+    y = y + 1
+    line(y, "position on the track.", colors.white)
     y = y + 1
     line(y, "Toggle during countdown or race = DNF.", colors.white)
     y = y + 2
@@ -710,20 +722,15 @@ local function drawModeMonitor()
     y = y + 1
     line(y, "Only one player should be ready.", colors.white)
     y = y + 1
-    line(y, "Press Start to begin that player's run.", colors.white)
+    line(y, "Press the start button next to pole", colors.white)
+    y = y + 1
+    line(y, "position on the track to begin that", colors.white)
+    y = y + 1
+    line(y, "player's run.", colors.white)
     y = y + 1
     line(y, "Reset ends the current session.", colors.white)
     y = y + 2
   end
-
-  line(y, "Controls:", colors.orange)
-  y = y + 1
-  line(y, "Left: toggle mode", colors.white)
-  y = y + 1
-  line(y, "Right: start", colors.white)
-  y = y + 1
-  line(y, "Back: reset", colors.white)
-  y = y + 2
 
   line(y, "Players:", colors.orange)
   y = y + 1
