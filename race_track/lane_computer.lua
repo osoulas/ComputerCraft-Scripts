@@ -3,7 +3,7 @@
 -- =========================
 
 -- --------- CONFIG ---------
-local PLAYER_NAME = "Player 1"
+local PLAYER_NAME = "Oskar"
 
 local DETECTOR_START_SIDE = "left"   -- start/finish detector
 local DETECTOR_MID_SIDE   = "right"  -- mid-track detector
@@ -11,7 +11,7 @@ local TOGGLE_SIDE         = "back"   -- participation toggle
 local MODEM_SIDE          = "bottom"
 
 -- Set this to a side ("top") or a peripheral name from `peripherals`
-local MONITOR_NAME = "monitor_4"
+local MONITOR_NAME = "monitor_7"
 
 local PROTOCOL = "race_net_v1"
 local RECORD_FILE = "lane_record.lua"
@@ -200,11 +200,15 @@ end
 local function onValidLap()
   local tNow = nowMs()
   local lapTime = (tNow - state.lapStartEpoch) / 1000
+  local previousBest = state.allTimeBest
   state.lapStartEpoch = tNow
   state.lapsCompleted = state.lapsCompleted + 1
   state.lastLap = lapTime
   state.totalTime = (tNow - state.raceStartEpoch) / 1000
-  table.insert(state.sessionLaps, lapTime)
+  table.insert(state.sessionLaps, {
+    lapTime = lapTime,
+    previousBest = previousBest
+  })
 
   if not state.bestLapSession or lapTime < state.bestLapSession then
     state.bestLapSession = lapTime

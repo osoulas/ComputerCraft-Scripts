@@ -957,7 +957,9 @@ local function drawSessionMonitor()
 
   else
     sessionMon.setBackgroundColor(colors.black)
+
     local statusLabel = statusText
+
     -- left-aligned status
     sessionMon.setCursorPos(leftPad, y)
     sessionMon.setTextColor(colors.cyan)
@@ -991,34 +993,49 @@ local function drawSessionMonitor()
     sessionMon.setCursorPos(w - #playerLabel - leftPad + 2, y)
     sessionMon.setTextColor(colors.orange)
     sessionMon.write(playerLabel)
-    y = y + 1
+    y = y + 2
 
     line(y, "All-time best: " .. fmtBoardTime(p.allTimeBest), colors.lightBlue)
     y = y + 2
-
-    line(y, "Session laps:", colors.orange)
-    y = y + 1
 
     if #p.sessionLaps == 0 then
       line(y, "No laps recorded yet.", colors.gray)
       return
     end
 
-    local lapNumWidth = 4
-    local timeWidth = 10
+    local function fmtDeltaToPreviousBest(lapTime, previousBest)
+      if not previousBest then
+        return " NEW "
+      end
 
-    for i, lap in ipairs(p.sessionLaps) do
+      local delta = lapTime - previousBest
+      if math.abs(delta) < 0.005 then
+        return "+0.00"
+      end
+
+      return string.format("%+.2f", delta)
+    end
+
+    local startIndex = math.max(1, #p.sessionLaps - 7)
+
+    for i = startIndex, #p.sessionLaps do
       if y > h then break end
 
+      local lapEntry = p.sessionLaps[i]
+      local lapTime = lapEntry.lapTime
+      local previousBest = lapEntry.previousBest
+      local deltaText = fmtDeltaToPreviousBest(lapTime, previousBest)
+
       local colour = colors.white
-      if p.allTimeBest and math.abs(lap - p.allTimeBest) < 0.0005 then
+      if not previousBest or lapTime < previousBest then
         colour = colors.lime
       end
 
       local row = string.format(
-        "%-" .. lapNumWidth .. "d %" .. timeWidth .. "s",
+        "%-3d %8s %6s",
         i,
-        fmtBoardTime(lap)
+        fmtBoardTime(lapTime),
+        deltaText
       )
 
       line(y, row, colour)
@@ -1204,7 +1221,10 @@ local function handleNetworkMessage(msg)
     p.lastLap = msg.lapTime
     p.bestLapSession = msg.bestLapSession
     p.totalTime = msg.totalTime
-    table.insert(p.sessionLaps, msg.lapTime)
+    table.insert(p.sessionLaps, {
+      lapTime = msg.lapTime,
+      previousBest = msg.previousBest
+    })
     p.active = true
     recordBest(msg.player, msg.allTimeBest)
 
