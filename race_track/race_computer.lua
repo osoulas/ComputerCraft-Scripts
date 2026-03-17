@@ -380,6 +380,27 @@ local function drawShadowedStringScaled(mon, str, px, py, scale, mainColour, sha
   drawStringScaled(mon, str, px, py, scale, mainColour)
 end
 
+local function drawModeHeader()
+  local title = "MINE KART"
+
+  local prev = term.current()
+  term.redirect(modeMon)
+  local w, h = term.getSize()
+  term.redirect(prev)
+
+  local titleScale = 1
+  local titleWidth = stringUnitsWide(title) * titleScale
+  local titleHeight = 5 * titleScale
+
+  local titleX = math.floor((w - titleWidth) / 2) + 1
+  local titleY = 2
+
+  local darkYellowShadow = setPaletteFromColour(modeMon, colors.gray, colors.yellow, 0.38)
+  drawShadowedStringScaled(modeMon, title, titleX, titleY, titleScale, colors.yellow, darkYellowShadow)
+
+  return titleY + titleHeight + 2
+end
+
 local function drawBestHeader()
   local title = "BEST TIMES"
   local subtitle = "ALL-TIME RANKING"
@@ -657,39 +678,69 @@ local function drawModeMonitor()
   modeMon.setBackgroundColor(colors.black)
   modeMon.clear()
 
+  local w, h = modeMon.getSize()
+
   local function line(y, text, color)
+    if y < 1 or y > h then return end
     modeMon.setCursorPos(1, y)
     modeMon.setTextColor(color or colors.white)
-    modeMon.write(text)
+    modeMon.setBackgroundColor(colors.black)
+    modeMon.write(text:sub(1, w))
   end
 
-  line(1, "MODE / INSTRUCTIONS", colors.yellow)
-  line(3, "Mode: " .. (mode == "race" and "RACE" or "TIME TRIAL"), colors.cyan)
-  line(4, "Phase: " .. string.upper(phase), colors.lightGray)
+  local y = drawModeHeader()
 
-  local lapDisplay = currentLapTarget or lapSelectorValue()
+  local modeText = (mode == "race") and "RACE" or "TIME TRIAL"
+  local statusText = string.upper(phase)
+  line(y, "Mode: " .. modeText .. "   Status: " .. statusText, colors.cyan)
+  y = y + 2
+
   if mode == "race" then
-    line(5, "Laps: " .. tostring(lapDisplay), colors.white)
+    local laps = currentLapTarget or lapSelectorValue()
+    line(y, "Race mode:", colors.orange)
+    y = y + 1
+    line(y, "All ready players race together.", colors.white)
+    y = y + 1
+    line(y, "Laps: " .. tostring(laps) .. ".", colors.white)
+    y = y + 1
+    line(y, "Toggle during countdown or race = DNF.", colors.white)
+    y = y + 2
   else
-    line(5, "Laps: free session", colors.white)
+    line(y, "Time trial mode:", colors.orange)
+    y = y + 1
+    line(y, "Only one player should be ready.", colors.white)
+    y = y + 1
+    line(y, "Press Start to begin that player's run.", colors.white)
+    y = y + 1
+    line(y, "Reset ends the current session.", colors.white)
+    y = y + 2
   end
 
-  line(7, "Buttons:", colors.orange)
-  line(8, "Left  = toggle mode", colors.white)
-  line(9, "Right = start", colors.white)
-  line(10, "Back  = reset", colors.white)
+  line(y, "Controls:", colors.orange)
+  y = y + 1
+  line(y, "Left: toggle mode", colors.white)
+  y = y + 1
+  line(y, "Right: start", colors.white)
+  y = y + 1
+  line(y, "Back: reset", colors.white)
+  y = y + 2
 
-  line(12, "Ready players:", colors.orange)
-  local y = 13
+  line(y, "Players:", colors.orange)
+  y = y + 1
+
   local names = {}
-  for name, _ in pairs(players) do table.insert(names, name) end
+  for name, _ in pairs(players) do
+    table.insert(names, name)
+  end
   table.sort(names)
+
   for _, name in ipairs(names) do
+    if y > h then break end
     local p = players[name]
-    local status = p.enabled and "YES" or "NO"
-    line(y, string.format("%-12s %s", name:sub(1, 12), status), p.enabled and colors.lime or colors.red)
+    local ready = p.enabled and "READY" or "NOT READY"
+    local colour = p.enabled and colors.lime or colors.red
+    line(y, string.format("%-12s %s", name:sub(1, 12), ready), colour)
     y = y + 1
-    if y > 25 then break end
   end
 end
 
