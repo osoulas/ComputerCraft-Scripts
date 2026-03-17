@@ -730,7 +730,7 @@ local function drawModeMonitor()
     y = y + 1
 
     local readyColour = (readyCount > 1) and colors.red or colors.lime
-    line(y, "Only one player should be ready.", readyColour)
+    line(y, "One player is ready.", readyColour)
     y = y + 1
 
     line(y, "To ready, flick the lever in your pit.", colors.white)
