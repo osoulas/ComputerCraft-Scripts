@@ -67,7 +67,7 @@ if not sessionMon then error("Could not wrap session monitor") end
 
 startMon.setTextScale(0.5)
 bestMon.setTextScale(1)
-modeMon.setTextScale(0.5)
+modeMon.setTextScale(1)
 sessionMon.setTextScale(0.5)
 
 local bigFont = {
@@ -691,9 +691,9 @@ local function drawModeMonitor()
 
   local y = drawModeHeader()
 
-  line(y, "Welcome to Mine Kart, select racing mode", colors.white)
+  line(y, "Welcome to Mine Kart, select racing", colors.white)
   y = y + 1
-  line(y, "with the toggle on the left.", colors.white)
+  line(y, "mode with the toggle on the left.", colors.white)
   y = y + 2
 
   local modeText = (mode == "race") and "RACE" or "TIME TRIAL"
@@ -701,32 +701,43 @@ local function drawModeMonitor()
   line(y, "Mode: " .. modeText .. "   Status: " .. statusText, colors.cyan)
   y = y + 2
 
+  -- Count ready players
+  local readyCount = 0
+  for _, p in pairs(players) do
+    if p.enabled then
+      readyCount = readyCount + 1
+    end
+  end
+
   if mode == "race" then
     local laps = currentLapTarget or lapSelectorValue()
     line(y, "Race mode:", colors.orange)
     y = y + 1
+    line(y, "Laps: " .. tostring(laps) .. " (change with lever)", colors.lightGray)
+    y = y + 1
     line(y, "All ready players race together.", colors.white)
     y = y + 1
-    line(y, "Laps: " .. tostring(laps) .. " (change with lever to", colors.white)
+    line(y, "To ready up, flick the lever in your pit.", colors.white)
     y = y + 1
-    line(y, "the left).", colors.white)
+    line(y, "To start, press the button next to", colors.white)
     y = y + 1
-    line(y, "Press the start button next to pole", colors.white)
+    line(y, "pole position on the track.", colors.white)
     y = y + 1
-    line(y, "position on the track.", colors.white)
-    y = y + 1
-    line(y, "Toggle during countdown or race = DNF.", colors.white)
+    line(y, "Toggle ready during race = DNF", colors.white)
     y = y + 2
   else
     line(y, "Time trial mode:", colors.orange)
     y = y + 1
-    line(y, "Only one player should be ready.", colors.white)
+
+    local readyColour = (readyCount > 1) and colors.red or colors.white
+    line(y, "Only one player should be ready.", readyColour)
     y = y + 1
-    line(y, "Press the start button next to pole", colors.white)
+
+    line(y, "To ready up, flick the lever in your pit.", colors.white)
     y = y + 1
-    line(y, "position on the track to begin that", colors.white)
+    line(y, "To start, press the button next to", colors.white)
     y = y + 1
-    line(y, "player's run.", colors.white)
+    line(y, "pole position on the track.", colors.white)
     y = y + 1
     line(y, "Reset ends the current session.", colors.white)
     y = y + 2
@@ -749,6 +760,31 @@ local function drawModeMonitor()
     line(y, string.format("%-12s %s", name:sub(1, 12), ready), colour)
     y = y + 1
   end
+  line(y, "1", colors.white)
+  y = y + 1
+  line(y, "2", colors.white)
+  y = y + 1
+  line(y, "3", colors.white)
+  y = y + 1
+  line(y, "4", colors.white)
+  y = y + 1
+  line(y, "5", colors.white)
+  y = y + 1
+  line(y, "6", colors.white)
+  y = y + 1
+  line(y, "7", colors.white)
+  y = y + 1
+  line(y, "8", colors.white)
+  y = y + 1
+  line(y, "1", colors.white)
+  y = y + 1
+  line(y, "1", colors.white)
+  y = y + 1
+  line(y, "1", colors.white)
+  y = y + 1
+  line(y, "1", colors.white)
+  y = y + 1
+
 end
 
 local function raceSortKey(a, b)
