@@ -691,7 +691,7 @@ local function drawModeMonitor()
 
   local y = drawModeHeader()
 
-  line(y, "Welcome to Mine Kart, select racing", colors.white)
+  line(y, "Welcome to Mine Kart! Select racing", colors.white)
   y = y + 1
   line(y, "mode with the toggle on the left.", colors.white)
   y = y + 2
