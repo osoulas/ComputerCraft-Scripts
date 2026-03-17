@@ -191,7 +191,7 @@ local function drawMonitor()
     writeLine(11, "Session laps:", colors.orange)
     local line = 12
     for i = math.max(1, #state.sessionLaps - 5), #state.sessionLaps do
-      writeLine(line, tostring(i) .. ". " .. fmtTime(state.sessionLaps[i]), colors.white)
+      writeLine(line, tostring(i) .. ". " .. fmtTime(state.sessionLaps[i].lapTime), colors.white)
       line = line + 1
     end
   end
