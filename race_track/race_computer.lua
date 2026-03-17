@@ -11,8 +11,8 @@ local MODEM_SIDE        = "bottom"
 
 -- Set these to sides or peripheral names from `peripherals`
 local START_MONITOR_NAME    = "monitor_20"
-local BEST_MONITOR_NAME     = "monitor_18"
-local MODE_MONITOR_NAME     = "monitor_17"
+local BEST_MONITOR_NAME     = "monitor_17"
+local MODE_MONITOR_NAME     = "monitor_18"
 local SESSION_MONITOR_NAME  = "monitor_9"
 
 local PROTOCOL = "race_net_v1"
@@ -693,7 +693,7 @@ local function drawModeMonitor()
 
   line(y, "Welcome to Mine Kart! Select racing", colors.white)
   y = y + 1
-  line(y, "mode with the toggle on the left.", colors.white)
+  line(y, "mode with the toggle on the right.", colors.white)
   y = y + 2
 
   local modeText = (mode == "race") and "RACE" or "TIME TRIAL"
@@ -713,7 +713,7 @@ local function drawModeMonitor()
     local laps = currentLapTarget or lapSelectorValue()
     line(y, "Race mode:", colors.orange)
     y = y + 1
-    line(y, "Laps: " .. tostring(laps) .. " (change with lever)", colors.lightGray)
+    line(y, "Laps: " .. tostring(laps) .. " (change with lever on right)", colors.lightGray)
     y = y + 1
     line(y, "All ready players race together.", colors.white)
     y = y + 1
