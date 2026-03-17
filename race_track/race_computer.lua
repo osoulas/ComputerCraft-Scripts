@@ -128,6 +128,9 @@ local countdownLastShown = nil
 local ttPlayer = nil
 local raceStartEpoch = nil
 local ttLapStartEpoch = nil
+local ttLapStartEpoch = nil
+local ttHoldUntil = nil
+local ttHoldTime = nil
 
 local players = {}
 
@@ -216,6 +219,9 @@ local function resetAll()
   currentLapTarget = nil
   raceStartEpoch = nil
   ttLapStartEpoch = nil
+  ttLapStartEpoch = nil
+  ttHoldUntil = nil
+  ttHoldTime = nil
   clearSessionFields()
   send({ type = "reset_lane", target = "*" })
 end
@@ -1059,12 +1065,20 @@ local function redrawAll()
     local elapsed = nil
 
     if mode == "time_trial" and ttLapStartEpoch then
-      elapsed = (nowMs() - ttLapStartEpoch) / 1000
+      if ttHoldUntil and nowMs() < ttHoldUntil then
+        -- show frozen lap time
+        drawRunningTime(ttHoldTime)
+        return
+      end
+
+      if ttLapStartEpoch then
+        elapsed = (nowMs() - ttLapStartEpoch) / 1000
+      end
     elseif raceStartEpoch then
       elapsed = (nowMs() - raceStartEpoch) / 1000
     end
 
-    if elapsed and elapsed >= 10 then
+    if elapsed and (mode == "time_trial" or elapsed >= 10) then
       drawRunningTime(elapsed)
     end
   end
@@ -1237,7 +1251,9 @@ local function handleNetworkMessage(msg)
     p.active = true
     recordBest(msg.player, msg.allTimeBest)
     if mode == "time_trial" and msg.player == ttPlayer then
-      ttLapStartEpoch = nowMs()
+      ttHoldTime = msg.lapTime
+      ttHoldUntil = nowMs() + 2000   -- 2 seconds
+      ttLapStartEpoch = nowMs()      -- next lap starts immediately
     end
 
   elseif msg.type == "finished" then
