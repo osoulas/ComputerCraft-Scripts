@@ -13,7 +13,7 @@ local MODEM_SIDE        = "bottom"
 local START_MONITOR_NAME    = "monitor_20"
 local BEST_MONITOR_NAME     = "monitor_17"
 local MODE_MONITOR_NAME     = "monitor_18"
-local SESSION_MONITOR_NAME  = "monitor_9"
+local SESSION_MONITOR_NAME  = "monitor_21"
 
 local PROTOCOL = "race_net_v1"
 local RECORD_FILE = "central_records.lua"
@@ -68,7 +68,7 @@ if not sessionMon then error("Could not wrap session monitor") end
 startMon.setTextScale(0.5)
 bestMon.setTextScale(1)
 modeMon.setTextScale(1)
-sessionMon.setTextScale(0.5)
+sessionMon.setTextScale(1)
 
 local bigFont = {
   ["0"] = {"111","101","101","101","111"},
