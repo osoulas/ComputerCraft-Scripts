@@ -27,7 +27,11 @@ local function loadRecord()
     local data = textutils.unserialize(txt)
     if type(data) == "table" then return data end
   end
-  return { allTimeBest = nil }
+  return {
+    allTimeBest = nil,
+    allTimeLapsCompleted = 0,
+    previousLapAllSessions = nil,
+  }
 end
 
 local function saveRecord(data)
@@ -37,6 +41,8 @@ local function saveRecord(data)
 end
 
 local record = loadRecord()
+record.allTimeLapsCompleted = record.allTimeLapsCompleted or 0
+record.previousLapAllSessions = record.previousLapAllSessions or nil
 
 if not rednet.isOpen(MODEM_SIDE) then
   rednet.open(MODEM_SIDE)
@@ -48,6 +54,164 @@ if not mon then
 end
 
 mon.setTextScale(0.5)
+
+local bigFont = {
+  -- NUMBERS
+  ["0"] = {"111","101","101","101","111"},
+  ["1"] = {"010","110","010","010","111"},
+  ["2"] = {"111","001","111","100","111"},
+  ["3"] = {"111","001","111","001","111"},
+  ["4"] = {"101","101","111","001","001"},
+  ["5"] = {"111","100","111","001","111"},
+  ["6"] = {"111","100","111","101","111"},
+  ["7"] = {"111","001","001","001","001"},
+  ["8"] = {"111","101","111","101","111"},
+  ["9"] = {"111","101","111","001","111"},
+
+  -- LETTERS
+  ["A"] = {"010","101","111","101","101"},
+  ["B"] = {"110","101","110","101","110"},
+  ["C"] = {"111","100","100","100","111"},
+  ["D"] = {"110","101","101","101","110"},
+  ["E"] = {"111","100","110","100","111"},
+  ["F"] = {"111","100","110","100","100"},
+  ["G"] = {"111","100","101","101","111"},
+  ["H"] = {"101","101","111","101","101"},
+  ["I"] = {"111","010","010","010","111"},
+  ["J"] = {"001","001","001","101","111"},
+  ["K"] = {"101","110","100","110","101"},
+  ["L"] = {"100","100","100","100","111"},
+  ["M"] = {"101","111","111","101","101"},
+  ["N"] = {"101","111","111","111","101"},
+  ["O"] = {"111","101","101","101","111"},
+  ["P"] = {"111","101","111","100","100"},
+  ["Q"] = {"111","101","101","111","001"},
+  ["R"] = {"110","101","110","101","101"},
+  ["S"] = {"111","100","111","001","111"},
+  ["T"] = {"111","010","010","010","010"},
+  ["U"] = {"101","101","101","101","111"},
+  ["V"] = {"101","101","101","101","010"},
+  ["W"] = {"101","101","111","111","101"},
+  ["X"] = {"101","101","010","101","101"},
+  ["Y"] = {"101","101","010","010","010"},
+  ["Z"] = {"111","001","010","100","111"},
+
+  -- SYMBOLS
+  [":"] = {"0","1","0","1","0"},
+  ["."] = {"0","0","0","0","1"},
+  ["-"] = {"0","0","111","0","0"},
+  ["+"] = {"0","010","111","010","0"},
+  ["/"] = {"001","001","010","100","100"},
+
+  [" "] = {"0","0","0","0","0"}
+}
+
+local function charWidth(ch)
+  local patt = bigFont[ch] or bigFont[" "]
+  return #patt[1]
+end
+
+local function stringUnitsWide(str)
+  local total = 0
+  for i = 1, #str do
+    local ch = str:sub(i, i)
+    total = total + charWidth(ch)
+    if i < #str then
+      total = total + 1
+    end
+  end
+  return total
+end
+
+local function drawPixelSafe(px, py, colour)
+  local w, h = term.getSize()
+  if px >= 1 and px <= w and py >= 1 and py <= h then
+    paintutils.drawPixel(px, py, colour)
+  end
+end
+
+local function drawCharScaled(ch, px, py, scale, colour)
+  local patt = bigFont[ch] or bigFont[" "]
+  local pw = #patt[1]
+
+  for row = 1, 5 do
+    local line = patt[row]
+    for col = 1, pw do
+      if line:sub(col, col) == "1" then
+        local bx = px + (col - 1) * scale
+        local by = py + (row - 1) * scale
+
+        for sy = 0, scale - 1 do
+          for sx = 0, scale - 1 do
+            drawPixelSafe(bx + sx, by + sy, colour)
+          end
+        end
+      end
+    end
+  end
+end
+
+local function drawStringScaled(mon, str, px, py, scale, colour)
+  local prev = term.current()
+  term.redirect(mon)
+
+  for i = 1, #str do
+    local ch = str:sub(i, i)
+    drawCharScaled(ch, px, py, scale, colour)
+    px = px + charWidth(ch) * scale
+    if i < #str then
+      px = px + scale
+    end
+  end
+
+  term.redirect(prev)
+end
+
+local function getDefaultRGB(col)
+  local defaults = {
+    [colors.white]     = 0xF0F0F0,
+    [colors.orange]    = 0xF2B233,
+    [colors.magenta]   = 0xE57FD8,
+    [colors.lightBlue] = 0x99B2F2,
+    [colors.yellow]    = 0xDEDE6C,
+    [colors.lime]      = 0x7FCC19,
+    [colors.pink]      = 0xF2B2CC,
+    [colors.gray]      = 0x4C4C4C,
+    [colors.lightGray] = 0x999999,
+    [colors.cyan]      = 0x4C99B2,
+    [colors.purple]    = 0xB266E5,
+    [colors.blue]      = 0x3366CC,
+    [colors.brown]     = 0x7F664C,
+    [colors.green]     = 0x57A64E,
+    [colors.red]       = 0xCC4C4C,
+    [colors.black]     = 0x111111
+  }
+
+  local rgb = defaults[col] or 0x000000
+  return colors.unpackRGB(rgb)
+end
+
+local function clamp01(x)
+  if x < 0 then return 0 end
+  if x > 1 then return 1 end
+  return x
+end
+
+local function setPaletteFromColour(mon, paletteSlot, baseColour, factor)
+  local r, g, b = getDefaultRGB(baseColour)
+
+  r = clamp01(r * factor)
+  g = clamp01(g * factor)
+  b = clamp01(b * factor)
+
+  mon.setPaletteColor(paletteSlot, r, g, b)
+  return paletteSlot
+end
+
+local function drawShadowedStringScaled(mon, str, px, py, scale, mainColour, shadowColour)
+  drawStringScaled(mon, str, px + scale, py + scale, scale, shadowColour)
+  drawStringScaled(mon, str, px, py, scale, mainColour)
+end
 
 local state = {
   mode = "race",          -- "race" or "time_trial"
@@ -71,6 +235,9 @@ local state = {
 
   allTimeBest = record.allTimeBest,
   stateLabel = redstone.getInput(TOGGLE_SIDE) and "READY" or "IDLE",
+
+  allTimeLapsCompleted = record.allTimeLapsCompleted,
+  previousLapAllSessions = record.previousLapAllSessions,
 }
 
 local lastInputs = {
@@ -83,6 +250,27 @@ local lastPulseAt = {
   start = 0,
   mid = 0,
 }
+
+
+local function drawLaneHeader(title, maxWidth)
+  local titleScale = 1
+  local titleWidth = stringUnitsWide(title) * titleScale
+  local titleHeight = 5 * titleScale
+
+  while titleScale > 1 and titleWidth > maxWidth do
+    titleScale = titleScale - 1
+    titleWidth = stringUnitsWide(title) * titleScale
+    titleHeight = 5 * titleScale
+  end
+
+  local titleX = math.floor((maxWidth - titleWidth) / 2) + 1
+  local titleY = 1
+
+  local darkYellowShadow = setPaletteFromColour(mon, colors.gray, colors.yellow, 0.38)
+  drawShadowedStringScaled(mon, title, titleX, titleY, titleScale, colors.yellow, darkYellowShadow)
+
+  return titleY + titleHeight + 2
+end
 
 local function nowMs()
   return os.epoch("utc")
@@ -175,6 +363,21 @@ local function fmtDeltaToPreviousBest(lapTime, previousBest)
   return string.format("%+.2f", delta)
 end
 
+local function fmtDeltaToPreviousBest(lapTime, previousBest)
+  if not lapTime then
+    return ""
+  end
+  if not previousBest then
+    return "NEW"
+  end
+
+  local delta = lapTime - previousBest
+  if math.abs(delta) < 0.005 then
+    return "+0.00"
+  end
+  return string.format("%+.2f", delta)
+end
+
 local function drawMonitor()
   mon.setBackgroundColor(colors.black)
   mon.setTextColor(colors.white)
@@ -203,13 +406,6 @@ local function drawMonitor()
     writeAt(rightX, y, text:sub(1, rightW), colour)
   end
 
-  local function trunc(s, n)
-    s = tostring(s or "")
-    if #s <= n then return s end
-    if n <= 1 then return s:sub(1, n) end
-    return s:sub(1, n - 1) .. "…"
-  end
-
   local runningTotal = state.totalTime
   if state.raceActive and state.raceStartEpoch then
     runningTotal = (nowMs() - state.raceStartEpoch) / 1000
@@ -226,36 +422,36 @@ local function drawMonitor()
   end
 
   -- divider
-  for y = 1, h do
+  for yy = 1, h do
     if leftW + 1 <= w then
-      writeAt(leftW + 1, y, "|", colors.gray)
+      writeAt(leftW + 1, yy, "|", colors.gray)
     end
   end
 
   -- LEFT COLUMN
-  local y = 1
-  writeLeft(y, "", trunc(PLAYER_NAME, leftW), colors.yellow); y = y + 1
+  local y = drawLaneHeader(PLAYER_NAME, leftW)
+
   writeLeft(y, "Mode: ", state.mode == "race" and "RACE" or "TIME TRIAL", colors.cyan); y = y + 1
   writeLeft(y, "State: ", state.stateLabel, colors.lightGray); y = y + 1
   writeLeft(
     y,
-    "In: ",
+    "Participating: ",
     state.localEnabled and "YES" or "NO",
     state.localEnabled and colors.lime or colors.red
   ); y = y + 1
 
   y = y + 1
-  writeLeft(y, "All-time: ", fmtTime(state.allTimeBest), colors.white); y = y + 1
-  writeLeft(y, "Prev lap: ", fmtTime(state.lastLap), colors.white); y = y + 1
-  writeLeft(y, "Laps done: ", tostring(state.lapsCompleted or 0), colors.white); y = y + 1
-  writeLeft(y, "Total: ", fmtTime(runningTotal), colors.white); y = y + 1
+  writeLeft(y, "All-time best: ", fmtTime(state.allTimeBest), colors.white); y = y + 1
+  writeLeft(y, "Prev lap: ", fmtTime(state.previousLapAllSessions), colors.white); y = y + 1
+  writeLeft(y, "All-time laps: ", tostring(state.allTimeLapsCompleted or 0), colors.white); y = y + 1
 
   -- RIGHT COLUMN
   local ry = 1
-  writeRight(ry, "SESSION", colors.orange); ry = ry + 1
-  writeRight(ry, "Best: " .. fmtTime(state.bestLapSession), colors.white); ry = ry + 1
-  writeRight(ry, "Lap: " .. tostring(currentLap), colors.white); ry = ry + 1
-  writeRight(ry, "Done: " .. tostring(state.lapsCompleted or 0), colors.white); ry = ry + 1
+  writeRight(ry, "Session", colors.orange); ry = ry + 1
+  writeRight(ry, "Best:  " .. fmtTime(state.bestLapSession), colors.white); ry = ry + 1
+  writeRight(ry, "Lap:   " .. tostring(currentLap), colors.white); ry = ry + 1
+  writeRight(ry, "Done:  " .. tostring(state.lapsCompleted or 0), colors.white); ry = ry + 1
+  writeRight(ry, "Total: " .. fmtTime(runningTotal), colors.white); ry = ry + 1
 
   ry = ry + 1
   writeRight(ry, "Times", colors.orange); ry = ry + 1
@@ -301,6 +497,12 @@ local function onValidLap()
   state.lapsCompleted = state.lapsCompleted + 1
   state.lastLap = lapTime
   state.totalTime = (tNow - state.raceStartEpoch) / 1000
+  state.previousLapAllSessions = lapTime
+  state.allTimeLapsCompleted = (state.allTimeLapsCompleted or 0) + 1
+
+  record.previousLapAllSessions = state.previousLapAllSessions
+  record.allTimeLapsCompleted = state.allTimeLapsCompleted
+  saveRecord(record)
   table.insert(state.sessionLaps, {
     lapTime = lapTime,
     previousBest = previousBest
