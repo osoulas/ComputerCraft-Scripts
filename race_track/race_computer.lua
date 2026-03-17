@@ -842,19 +842,29 @@ local function drawSessionMonitor()
     line(y, "Standings   Laps: " .. tostring(laps), colors.orange)
     y = y + 1
 
-    local posWidth = 3
-    local lapsWidth = 4
-    local timeWidth = 10
-    local innerWidth = math.max(10, w - leftPad - 1)
-    local nameWidth = math.max(6, innerWidth - posWidth - lapsWidth - timeWidth - 4)
+    local leftPad = 1
+
+    local posWidth = 1
+    local nameWidth = 7
+    local lapsWidth = 3
+    local timeWidth = 8
+
+    local function line(yPos, text, color)
+      if yPos < 1 or yPos > h then return end
+      sessionMon.setCursorPos(leftPad, yPos)
+      sessionMon.setTextColor(color or colors.white)
+      sessionMon.setBackgroundColor(colors.black)
+      sessionMon.write(text:sub(1, 25 - leftPad))
+    end
 
     local header = string.format(
-      "%-" .. posWidth .. "s %-" .. nameWidth .. "s %" .. lapsWidth .. "s %" .. timeWidth .. "s",
-      "PL", "NAME", "LAP", "TIME"
+    "%-" .. posWidth .. "s %-" .. nameWidth .. "s %-" .. lapsWidth .. "s %" .. timeWidth .. "s",
+    "PL", "NAME", "LAP", "TIME"
     )
     line(y, header, colors.lightBlue)
     y = y + 1
-    line(y, string.rep("-", math.min(innerWidth, #header)), colors.white)
+
+    line(y, string.rep("-", 22), colors.white)
     y = y + 1
 
     local names = sessionParticipants()
@@ -881,6 +891,9 @@ local function drawSessionMonitor()
       local timeCol = "--"
       local rowColour = colors.white
 
+      ilocal timeCol = "--:--.--"
+      local rowColour = colors.white
+
       if p.finished then
         timeCol = fmtBoardTime(p.finalTime)
         rowColour = colors.lime
@@ -888,11 +901,16 @@ local function drawSessionMonitor()
         timeCol = "DNF"
         rowColour = colors.red
       elseif p.active or p.armed then
-        timeCol = fmtBoardTime(p.totalTime)
+        if p.totalTime then
+          timeCol = fmtBoardTime(p.totalTime)
+        else
+          timeCol = "RUN"
+        end
+
       end
 
       local row = string.format(
-        "%-" .. posWidth .. "d %-" .. nameWidth .. "s %" .. lapsWidth .. "d %" .. timeWidth .. "s",
+        "%-" .. posWidth .. "d %-" .. nameWidth .. "s %-" .. lapsWidth .. "d %" .. timeWidth .. "s",
         i,
         name:sub(1, nameWidth),
         p.lapsCompleted or 0,
