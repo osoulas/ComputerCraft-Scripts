@@ -912,8 +912,6 @@ local function drawSessionMonitor()
       local rowColour = colors.white
 
       if phase == "idle" then
-        displayPlace = "-"
-
         rowColour = colors.white
       else
         if p.finished then
@@ -934,8 +932,10 @@ local function drawSessionMonitor()
       local currentLap
       if phase == "idle" then
         currentLap = 0
+        displayPlace = "-"
       else
         currentLap = math.min((p.lapsCompleted or 0) + 1, currentLapTarget or lapSelectorValue())
+        displayPlace = tostring(i)
       end
       if p.finished then
         currentLap = currentLapTarget or lapSelectorValue()
@@ -945,7 +945,7 @@ local function drawSessionMonitor()
 
       local row = string.format(
         " %-" .. posWidth .. "d %-" .. nameWidth .. "s %-" .. lapsWidth .. "d %" .. timeWidth .. "s",
-        i,
+        displayPlace,
         name:sub(1, nameWidth),
         currentLap,
         timeCol
