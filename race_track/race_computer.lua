@@ -28,6 +28,38 @@ local bestMon = peripheral.wrap(BEST_MONITOR_NAME)
 local modeMon = peripheral.wrap(MODE_MONITOR_NAME)
 local sessionMon = peripheral.wrap(SESSION_MONITOR_NAME)
 
+
+local function resetMonitorPalette(mon)
+  local defaults = {
+    [colors.white]     = 0xF0F0F0,
+    [colors.orange]    = 0xF2B233,
+    [colors.magenta]   = 0xE57FD8,
+    [colors.lightBlue] = 0x99B2F2,
+    [colors.yellow]    = 0xDEDE6C,
+    [colors.lime]      = 0x7FCC19,
+    [colors.pink]      = 0xF2B2CC,
+    [colors.gray]      = 0x4C4C4C,
+    [colors.lightGray] = 0x999999,
+    [colors.cyan]      = 0x4C99B2,
+    [colors.purple]    = 0xB266E5,
+    [colors.blue]      = 0x3366CC,
+    [colors.brown]     = 0x7F664C,
+    [colors.green]     = 0x57A64E,
+    [colors.red]       = 0xCC4C4C,
+    [colors.black]     = 0x111111
+  }
+
+  for col, hex in pairs(defaults) do
+    local r, g, b = colors.unpackRGB(hex)
+    mon.setPaletteColor(col, r, g, b)
+  end
+end
+
+resetMonitorPalette(startMon)
+resetMonitorPalette(bestMon)
+resetMonitorPalette(modeMon)
+resetMonitorPalette(sessionMon)
+
 if not startMon then error("Could not wrap start monitor") end
 if not bestMon then error("Could not wrap best-times monitor") end
 if not modeMon then error("Could not wrap mode monitor") end
