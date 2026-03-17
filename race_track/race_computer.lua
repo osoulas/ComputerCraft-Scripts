@@ -956,12 +956,12 @@ local function drawSessionMonitor()
     end
 
   else
+    sessionMon.setBackgroundColor(colors.black)
     local statusLabel = statusText
     -- left-aligned status
     sessionMon.setCursorPos(leftPad, y)
     sessionMon.setTextColor(colors.cyan)
     sessionMon.write(statusLabel)
-    y = y + 2
 
     local readyNames = {}
     for name, p in pairs(players) do
@@ -986,8 +986,6 @@ local function drawSessionMonitor()
 
     local p = players[displayPlayer]
     local playerLabel = "Player: " .. displayPlayer
-
-    sessionMon.setBackgroundColor(colors.black)
 
     -- right-aligned player
     sessionMon.setCursorPos(w - #playerLabel - leftPad + 2, y)
