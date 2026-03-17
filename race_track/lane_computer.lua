@@ -264,7 +264,7 @@ local function drawLaneHeader(title, maxWidth)
   end
 
   local titleX = math.floor((maxWidth - titleWidth) / 2) + 1
-  local titleY = 1
+  local titleY = 2
 
   local darkYellowShadow = setPaletteFromColour(mon, colors.gray, colors.yellow, 0.38)
   drawShadowedStringScaled(mon, title, titleX, titleY, titleScale, colors.yellow, darkYellowShadow)
@@ -389,7 +389,8 @@ local function drawMonitor()
   local w, h = mon.getSize()
 
   local gap = 2
-  local leftW = math.max(12, math.floor((w - gap) / 2))
+  local usableW = w - gap
+  local leftW = math.max(12, math.floor((usableW * 3) / 5))
   local rightX = leftW + gap + 1
   local rightW = w - rightX + 1
 
