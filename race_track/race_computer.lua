@@ -887,13 +887,13 @@ local function drawSessionMonitor()
         if p.totalTime then
           timeCol = fmtBoardTime(p.totalTime)
         else
-          timeCol = "RUN"
+          timeCol = "--:--.--"
         end
 
       end
 
       local row = string.format(
-        " %-" .. posWidth .. "d %-" .. nameWidth .. "s %-" .. lapsWidth .. "d %" .. timeWidth .. "s",
+        " %- " .. posWidth .. "d %-" .. nameWidth .. "s %-" .. lapsWidth .. "d %" .. timeWidth .. "s",
         i,
         name:sub(1, nameWidth),
         p.lapsCompleted or 0,
