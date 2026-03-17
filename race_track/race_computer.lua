@@ -559,18 +559,26 @@ local function drawBestMonitor()
 
   local y = drawBestHeader()
 
-  -- Column layout
+    -- Table margins and column layout
+  local leftPad = 2
+  local rightPad = 2
+
   local posWidth = 5
   local bestWidth = 10
-  local nameWidth = math.max(6, w - posWidth - bestWidth - 2)
+  local innerWidth = math.max(10, w - leftPad - rightPad)
+  local nameWidth = math.max(6, innerWidth - posWidth - bestWidth - 2)
+
+  local function tableLine(yPos, text, color)
+    line(yPos, string.rep(" ", leftPad) .. text, color)
+  end
 
   local header = string.format(
-    "%-" .. posWidth .. "s %-" .. nameWidth .. "s %".. bestWidth .. "s",
+    "%-" .. posWidth .. "s %-" .. nameWidth .. "s %" .. bestWidth .. "s",
     "POS", "NAME", "BEST"
   )
-  line(y, header, colors.cyan)
+  tableLine(y, header, colors.cyan)
   y = y + 1
-  line(y, string.rep("-", math.min(w, posWidth + nameWidth + bestWidth + 2)), colors.white)
+  tableLine(y, string.rep("-", math.min(innerWidth, posWidth + nameWidth + bestWidth + 2)), colors.white)
   y = y + 1
 
   local ranked = {}
@@ -619,14 +627,14 @@ local function drawBestMonitor()
       fmtBoardTime(e.best)
     )
 
-    line(y, row, colour)
+    tableLine(y, row, colour)
     y = y + 1
   end
 
   -- Spacer before no-time section
   if #noTime > 0 and y <= h - 2 then
     y = y + 1
-    line(y, "NO RECORDED TIME", colors.red)
+    tableLine(y, "NO RECORDED TIME", colors.red)
     y = y + 1
   end
 
@@ -640,7 +648,7 @@ local function drawBestMonitor()
       "--:--.--"
     )
 
-    line(y, row, colors.gray)
+    tableLine(y, row, colors.gray)
     y = y + 1
   end
 end
