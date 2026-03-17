@@ -158,6 +158,23 @@ local function resetSession(keepToggleState)
   end
 end
 
+local function fmtDeltaToPreviousBest(lapTime, previousBest)
+  if not lapTime then
+    return ""
+  end
+
+  if not previousBest then
+    return "NEW"
+  end
+
+  local delta = lapTime - previousBest
+  if math.abs(delta) < 0.005 then
+    return "+0.00"
+  end
+
+  return string.format("%+.2f", delta)
+end
+
 local function drawMonitor()
   mon.setBackgroundColor(colors.black)
   mon.setTextColor(colors.white)
@@ -165,11 +182,32 @@ local function drawMonitor()
 
   local w, h = mon.getSize()
 
-  local function writeLine(y, text, color)
-    if y > h then return end
-    mon.setCursorPos(1, y)
-    mon.setTextColor(color or colors.white)
-    mon.write(text:sub(1, w))
+  local gap = 2
+  local leftW = math.max(12, math.floor((w - gap) / 2))
+  local rightX = leftW + gap + 1
+  local rightW = w - rightX + 1
+
+  local function writeAt(x, y, text, colour)
+    if y < 1 or y > h or x > w then return end
+    mon.setCursorPos(x, y)
+    mon.setTextColor(colour or colors.white)
+    mon.write(tostring(text):sub(1, math.max(0, w - x + 1)))
+  end
+
+  local function writeLeft(y, label, value, colour)
+    local text = label .. value
+    writeAt(1, y, text:sub(1, leftW), colour)
+  end
+
+  local function writeRight(y, text, colour)
+    writeAt(rightX, y, text:sub(1, rightW), colour)
+  end
+
+  local function trunc(s, n)
+    s = tostring(s or "")
+    if #s <= n then return s end
+    if n <= 1 then return s:sub(1, n) end
+    return s:sub(1, n - 1) .. "…"
   end
 
   local runningTotal = state.totalTime
@@ -177,23 +215,81 @@ local function drawMonitor()
     runningTotal = (nowMs() - state.raceStartEpoch) / 1000
   end
 
-  writeLine(1, PLAYER_NAME, colors.yellow)
-  writeLine(2, "Mode: " .. (state.mode == "race" and "RACE" or "TIME TRIAL"), colors.cyan)
-  writeLine(3, "State: " .. state.stateLabel, colors.lightGray)
-  writeLine(4, "Enabled: " .. (state.localEnabled and "YES" or "NO"), state.localEnabled and colors.lime or colors.red)
-  writeLine(5, "Lap: " .. tostring(state.lapsCompleted) .. "/" .. tostring(state.lapTarget), colors.white)
-  writeLine(6, "Last: " .. fmtTime(state.lastLap), colors.white)
-  writeLine(7, "Best: " .. fmtTime(state.bestLapSession), colors.white)
-  writeLine(8, "All-time: " .. fmtTime(state.allTimeBest), colors.white)
-  writeLine(9, "Total: " .. fmtTime(runningTotal), colors.white)
+  local currentLap = 0
+  if state.raceActive or state.sessionArmed or state.finished or state.dnf then
+    currentLap = (state.lapsCompleted or 0) + 1
+  end
+  if state.finished then
+    currentLap = state.lapTarget or currentLap
+  elseif state.mode == "race" and state.lapTarget then
+    currentLap = math.min(currentLap, state.lapTarget)
+  end
 
-  if state.mode == "time_trial" then
-    writeLine(11, "Session laps:", colors.orange)
-    local line = 12
-    for i = math.max(1, #state.sessionLaps - 5), #state.sessionLaps do
-      writeLine(line, tostring(i) .. ". " .. fmtTime(state.sessionLaps[i].lapTime), colors.white)
-      line = line + 1
+  -- divider
+  for y = 1, h do
+    if leftW + 1 <= w then
+      writeAt(leftW + 1, y, "|", colors.gray)
     end
+  end
+
+  -- LEFT COLUMN
+  local y = 1
+  writeLeft(y, "", trunc(PLAYER_NAME, leftW), colors.yellow); y = y + 1
+  writeLeft(y, "Mode: ", state.mode == "race" and "RACE" or "TIME TRIAL", colors.cyan); y = y + 1
+  writeLeft(y, "State: ", state.stateLabel, colors.lightGray); y = y + 1
+  writeLeft(
+    y,
+    "In: ",
+    state.localEnabled and "YES" or "NO",
+    state.localEnabled and colors.lime or colors.red
+  ); y = y + 1
+
+  y = y + 1
+  writeLeft(y, "All-time: ", fmtTime(state.allTimeBest), colors.white); y = y + 1
+  writeLeft(y, "Prev lap: ", fmtTime(state.lastLap), colors.white); y = y + 1
+  writeLeft(y, "Laps done: ", tostring(state.lapsCompleted or 0), colors.white); y = y + 1
+  writeLeft(y, "Total: ", fmtTime(runningTotal), colors.white); y = y + 1
+
+  -- RIGHT COLUMN
+  local ry = 1
+  writeRight(ry, "SESSION", colors.orange); ry = ry + 1
+  writeRight(ry, "Best: " .. fmtTime(state.bestLapSession), colors.white); ry = ry + 1
+  writeRight(ry, "Lap: " .. tostring(currentLap), colors.white); ry = ry + 1
+  writeRight(ry, "Done: " .. tostring(state.lapsCompleted or 0), colors.white); ry = ry + 1
+
+  ry = ry + 1
+  writeRight(ry, "Times", colors.orange); ry = ry + 1
+
+  if #state.sessionLaps == 0 then
+    writeRight(ry, "No laps yet.", colors.gray)
+    return
+  end
+
+  local availableRows = h - ry + 1
+  local startIndex = math.max(1, #state.sessionLaps - availableRows + 1)
+
+  for i = startIndex, #state.sessionLaps do
+    if ry > h then break end
+
+    local entry = state.sessionLaps[i]
+    local lapTime = entry.lapTime
+    local previousBest = entry.previousBest
+    local deltaText = fmtDeltaToPreviousBest(lapTime, previousBest)
+
+    local colour = colors.white
+    if not previousBest or lapTime < previousBest then
+      colour = colors.lime
+    end
+
+    local row = string.format(
+      "%-2d %7s %6s",
+      i,
+      fmtTime(lapTime),
+      deltaText
+    )
+
+    writeRight(ry, row, colour)
+    ry = ry + 1
   end
 end
 
