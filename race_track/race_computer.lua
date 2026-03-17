@@ -874,24 +874,7 @@ local function drawSessionMonitor()
       if y > h then break end
       local p = players[name]
 
-      local finalCol = "--"
-      local rowColour = colors.white
-
-      if p.finished then
-        finalCol = fmtBoardTime(p.finalTime)
-        rowColour = colors.lime
-      elseif p.dnf then
-        finalCol = "DNF"
-        rowColour = colors.red
-      elseif p.active or p.armed then
-        finalCol = "RUN"
-        rowColour = colors.white
-      end
-
-      local timeCol = "--"
-      local rowColour = colors.white
-
-      ilocal timeCol = "--:--.--"
+      local timeCol = "--:--.--"
       local rowColour = colors.white
 
       if p.finished then
