@@ -838,7 +838,7 @@ local function drawSessionMonitor()
   if mode == "race" then
     local laps = currentLapTarget or lapSelectorValue()
 
-    local statusLabel = "Status: " .. statusText
+    local statusLabel = statusText
     local lapsLabel = "Laps: " .. tostring(laps)
 
     sessionMon.setBackgroundColor(colors.black)
@@ -920,7 +920,7 @@ local function drawSessionMonitor()
           timeCol = fmtBoardTime(bestRecorded)
         end
 
-        rowColour = p.enabled and colors.lime or colors.white
+        rowColour = colors.white
       else
         if p.finished then
           timeCol = fmtBoardTime(p.finalTime)
